@@ -7,6 +7,11 @@ from PIL import Image, ImageTk
 albumCoverPlaceholder = Image.open("AlbumCoverPlaceholder.png")
 albumCoverPlaceholder = albumCoverPlaceholder.resize((100, 100), Image.ANTIALIAS)
 
+#set colours
+black05 = "#050505"
+black0a = "#0a0a0a"
+grey23 = "#232323"
+
 class MainWindow():
     def __init__(self):
         self.root = tk.Tk()
@@ -25,7 +30,7 @@ class MainWindow():
         self.initViewport()
 
     def initHeader(self):
-        self.header = Frame(self.root, bg="#0a0a0a")
+        self.header = Frame(self.root, bg=black0a)
         self.header.pack(fill=tk.X)
 
         self.logo = Label(self.header, text="Logo")
@@ -35,10 +40,10 @@ class MainWindow():
         self.login.pack(padx=5, pady=5, side=tk.RIGHT)
 
     def initSearch(self):
-        self.search = Frame(self.root, bg="#050505")
+        self.search = Frame(self.root, bg=black05)
         self.search.pack(fill=tk.Y, side=tk.LEFT)
 
-        self.searchbar = Frame(self.search, bg="#050505")
+        self.searchbar = Frame(self.search, bg=black05)
         self.searchbar.pack(fill=tk.X, side=tk.TOP)
 
         self.searchButton = Button(self.searchbar, text="🔍")
@@ -55,7 +60,7 @@ class MainWindow():
         self.initPlayer()
 
     def initPlayer(self):
-        self.player = Frame(self.root)
+        self.player = Frame(self.root, bg=black0a)
         self.player.pack(fill=tk.X, side=BOTTOM)
 
         albumCover = ImageTk.PhotoImage(albumCoverPlaceholder)
@@ -63,7 +68,7 @@ class MainWindow():
         self.albumCover.image = albumCover
         self.albumCover.pack(side=tk.RIGHT)
 
-        self.playerInfo = Frame(self.player)
+        self.playerInfo = Frame(self.player, bg=black0a)
         self.playerInfo.pack(fill=tk.BOTH)
 
         self.playerInfoLeft = Frame(self.playerInfo)
@@ -71,7 +76,9 @@ class MainWindow():
         self.playerInfoRight = Frame(self.playerInfo)
         self.playerInfoRight.pack(fill=tk.BOTH, side=tk.RIGHT)
 
-        self.playtime = ttk.Progressbar(self.playerInfo, orient="horizontal", mode="indeterminate", length=2500)
+        self.playtimeContainer = Frame(self.player, padx=10, pady=10)
+        self.playtimeContainer.pack(fill=tk.BOTH)
+        self.playtime = ttk.Progressbar(self.playtimeContainer, orient="horizontal", mode="indeterminate", length=2500)
         self.playtime.pack(fill=tk.X, side=tk.BOTTOM)
 
         self.songName = Label(self.playerInfoLeft, text="SongName").grid(row=0, column=0)
