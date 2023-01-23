@@ -10,6 +10,7 @@ albumCoverPlaceholder = albumCoverPlaceholder.resize((100, 100), Image.ANTIALIAS
 #set apperance variables
 blackSearch = "#0a0a0a"
 blackPlayer = "#0f0f0f"
+blackBackground = "#050505"
 textBrightHigh = "#ffffff"
 textBrightMed = "#e8e8e8"
 textBrightLow = "#c0c0c0"
@@ -48,7 +49,7 @@ class MainWindow():
         self.root = tk.Tk()
 
         self.root.title("Streaming Service NEA")
-        self.root.config(bg="black")
+        self.root.config(bg=blackBackground)
         self.root.geometry("1280x720") #default screen size
 
         self.initUI()
@@ -109,6 +110,7 @@ class MainWindow():
 
         self.playtimer = ttk.Progressbar(self.player, orient="horizontal", mode="determinate")
         self.playtimer.pack(fill=tk.X, padx=8, pady=(10, 0))
+
         self.playtimeInfoContainer = Frame(self.player, bg=blackPlayer)
         self.playtimeInfoContainer.pack(fill=tk.BOTH, side=tk.BOTTOM)
         self.currentPlaytime = Label(self.playtimeInfoContainer, text="0:00", font=fontMainNorm, bg=blackPlayer, fg=textBrightMed)
@@ -135,7 +137,26 @@ class MainWindow():
 
 class SearchResultItem():
     def __init__(self):
-        pass #TODO: make search result items
+        self.root = tk.Tk()
+
+        self.root.config(bg=blackPlayer)
+
+        albumCover = ImageTk.PhotoImage(albumCoverPlaceholder)
+        self.albumCover = Label(self.root, image=albumCover)
+        self.albumCover.image = albumCover
+        self.albumCover.pack(side=tk.LEFT, padx=10, pady=5)
+
+        self.infoContainer = Frame(self.root, bg=blackPlayer)
+        self.infoContainer.pack(side=tk.LEFT, fill=tk.X)
+
+        self.songName = Label(self.infoContainer, text="SongName", font=fontMainBold, bg=blackPlayer, fg=textBrightHigh)
+        self.songName.grid(row=0, column=0, padx=8, pady=15)
+        self.artistName = Label(self.infoContainer, text="ArtistName", font=fontMainBold, bg=blackPlayer, fg=textBrightMed)
+        self.artistName.grid(row=1, column=0, padx=8, pady=15)
+        self.albumName = Label(self.root, text="AlbumName", font=fontMainBold, bg=blackPlayer, fg=textBrightLow)
+        self.albumName.pack(side=tk.RIGHT, padx=8, pady=15)
+
+        self.root.mainloop()
 
 class stars():
     def __init__(self):
@@ -150,3 +171,4 @@ class stars():
         '''
 
 MainWindow()
+#SearchResultItem()
