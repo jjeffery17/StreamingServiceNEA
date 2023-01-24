@@ -3,10 +3,10 @@ from tkinter import *
 from tkinter import ttk
 from PIL import Image, ImageTk
 
-
+#set album cover placeholders
 albumCoverPlaceholder = Image.open("AlbumCoverPlaceholder.png")
 albumCoverPlaceholder = albumCoverPlaceholder.resize((100, 100), Image.ANTIALIAS)
-albumCoverPlaceholderSmall = albumCoverPlaceholder.resize((25, 25), Image.ANTIALIAS)
+albumCoverPlaceholderSmall = albumCoverPlaceholder.resize((50, 50), Image.ANTIALIAS)
 
 #set appearance variables
 blackSearch = "#0a0a0a"
@@ -42,7 +42,6 @@ def playtimeToSeconds(playtime):
     secs = int(listToString(playtime[splitterIndex+1:]))
 
     return (mins*60)+secs
-
 
 
 class MainWindow():
@@ -82,12 +81,35 @@ class MainWindow():
         self.searchButton = Button(self.searchbar, text="🔍")
         self.searchButton.pack(side=tk.LEFT)
 
-        self.searchEntry = Entry(self.searchbar, width=30)
+        self.searchEntry = Entry(self.searchbar, width=40)
         self.searchEntry.pack(fill=tk.X, padx=5, pady=5)
 
-        self.searchResults = Scrollbar(self.search, orient="vertical")
+        self.searchResults = Frame(self.search, bg=blackSearch)
         self.searchResults.pack(fill=tk.BOTH, padx=10, pady=10)
-        #self.searchResults.config(command=t.yview)
+
+
+        self.searchResultItemsContainer = Canvas(self.searchResults)
+        self.searchResultItemsContainer.pack(fill=tk.BOTH)
+
+        self.searchResultItems = []
+
+        #creating empty search results for testing
+        albumCoverSmall = ImageTk.PhotoImage(albumCoverPlaceholderSmall)
+        for i in range(5):
+            self.searchResultItems.append(SearchResultItem(self.searchResultItemsContainer, songName="Song", artistName="Artist", albumName="Album", albumCover=albumCoverSmall))
+            self.searchResultItems[i].pack(fill=tk.X)
+
+        '''
+        #scrollbar
+        self.searchResultsScrollbar = Scrollbar(self.searchResults, orient="vertical", bg=blackSearch, command=self.searchResultItemsContainer.yview)
+        self.searchResultsScrollbar.grid(row=0, column=1, sticky=tk.NS)
+
+        self.searchResultItemsContainer.configure(yscrollcommand=self.searchResultsScrollbar.set)
+        self.searchResultItemsContainer.bind("<Configure>", lambda e: self.searchResultItemsContainer.configure(scrollregion=self.searchResultsScrollbar.bbox("all")))
+        '''
+
+    def search(self, entry):
+        pass
 
     def initViewport(self):
         self.initPlayer()
@@ -97,7 +119,6 @@ class MainWindow():
         self.player.pack(fill=tk.X, side=BOTTOM)
 
         albumCover = ImageTk.PhotoImage(albumCoverPlaceholder)
-        albumCoverSmall = ImageTk.PhotoImage(albumCoverPlaceholderSmall)
         self.albumCover = Label(self.player, image=albumCover)
         self.albumCover.image = albumCover
         self.albumCover.pack(side=tk.RIGHT, padx=10, pady=5)
@@ -125,15 +146,11 @@ class MainWindow():
         self.artistName = Label(self.playerInfoLeft, text="ArtistName", font=fontMainBold, bg=blackPlayer, fg=textBrightMed)
         self.artistName.grid(row=1, column=0, padx=10, pady=5)
         self.albumName = Label(self.playerInfoRight, text="AlbumName", font=fontMainBold, bg=blackPlayer, fg=textBrightLow)
-        self.albumName.grid(row=0, column=0, padx=8, pady=15)
+        self.albumName.grid(row=0, column=0, padx=8, pady=10)
+        self.currentSongStars = stars(self.playerInfoRight)
+        self.currentSongStars.grid(row=1, column=0, padx=10, pady=5)
 
         self.updatePlaytime("1:10", "3:30")
-
-        self.searchResultItem = SearchResultItem(self.searchResults, songName="Song", artistName="Artist", albumName="Album", albumCover=albumCoverSmall)
-        self.searchResultItem.pack()
-
-    def search(self, entry):
-        pass
 
     def updatePlaytime(self, currentPlaytime, totalPlaytime):
         self.playtimer["value"] = (playtimeToSeconds(currentPlaytime)/playtimeToSeconds(totalPlaytime))*100
@@ -142,34 +159,34 @@ class MainWindow():
 
 class SearchResultItem(tk.Frame):
     def __init__(self, parent, songName, artistName, albumName, albumCover):
-        tk.Frame.__init__(self, parent)
+        tk.Frame.__init__(self, parent, bg=blackSearch)
 
         #albumCover = ImageTk.PhotoImage(albumCoverPlaceholder)
         self.albumCover = Label(self, image=albumCover)
         self.albumCover.image = albumCover
-        self.albumCover.pack(side=tk.LEFT, padx=10, pady=5)
+        self.albumCover.pack(side=tk.LEFT, padx=5, pady=5)
 
-        self.infoContainer = Frame(self, bg=blackPlayer)
-        self.infoContainer.pack(side=tk.LEFT, fill=tk.X)
+        self.infoContainerLeft = Frame(self, bg=blackSearch)
+        self.infoContainerLeft.pack(side=tk.LEFT, fill=tk.X)
+        self.infoContainerRight = Frame(self, bg=blackSearch)
+        self.infoContainerRight.pack(side=tk.RIGHT, fill=tk.X, padx=5)
 
-        self.songName = Label(self.infoContainer, text=songName, font=fontMainBoldSmall, bg=blackPlayer, fg=textBrightHigh)
-        self.songName.grid(row=0, column=0, padx=8, pady=15)
-        self.artistName = Label(self.infoContainer, text=artistName, font=fontMainBoldSmall, bg=blackPlayer, fg=textBrightMed)
-        self.artistName.grid(row=1, column=0, padx=8, pady=15)
-        self.albumName = Label(self, text=albumName, font=fontMainBoldSmall, bg=blackPlayer, fg=textBrightLow)
-        self.albumName.pack(side=tk.RIGHT, padx=8, pady=15)
+        self.songName = Label(self.infoContainerLeft, text=songName, font=fontMainBoldSmall, bg=blackSearch, fg=textBrightHigh)
+        self.songName.grid(row=0, column=0, pady=1)
+        self.artistName = Label(self.infoContainerLeft, text=artistName, font=fontMainBoldSmall, bg=blackSearch, fg=textBrightMed)
+        self.artistName.grid(row=1, column=0, pady=1)
+        self.albumName = Label(self.infoContainerRight, text=albumName, font=fontMainBoldSmall, bg=blackSearch, fg=textBrightLow)
+        self.albumName.grid(row=0, column=0)
+        self.currentSongStars = stars(self.infoContainerRight)
+        self.currentSongStars.grid(row=1, column=0)
 
-class stars():
-    def __init__(self):
-        pass #TODO: make stars
-        '''
-        self.root = tk.Tk()
-        self.star1 = Button(self.root, text="1").grid(row=0, column=0)
-        self.star2 = Button(self.root, text="2").grid(row=0, column=1)
-        self.star3 = Button(self.root, text="3").grid(row=0, column=2)
-        self.star4 = Button(self.root, text="4").grid(row=0, column=3)
-        self.star5 = Button(self.root, text="5").grid(row=0, column=4)
-        '''
+class stars(tk.Frame):
+    def __init__(self, parent):
+        tk.Frame.__init__(self, parent)
+        self.star1 = Button(self, text="1").grid(row=0, column=0)
+        self.star2 = Button(self, text="2").grid(row=0, column=1)
+        self.star3 = Button(self, text="3").grid(row=0, column=2)
+        self.star4 = Button(self, text="4").grid(row=0, column=3)
+        self.star5 = Button(self, text="5").grid(row=0, column=4)
 
 MainWindow()
-#SearchResultItem()
