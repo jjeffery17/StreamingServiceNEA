@@ -6,8 +6,9 @@ from PIL import Image, ImageTk
 
 albumCoverPlaceholder = Image.open("AlbumCoverPlaceholder.png")
 albumCoverPlaceholder = albumCoverPlaceholder.resize((100, 100), Image.ANTIALIAS)
+albumCoverPlaceholderSmall = albumCoverPlaceholder.resize((25, 25), Image.ANTIALIAS)
 
-#set apperance variables
+#set appearance variables
 blackSearch = "#0a0a0a"
 blackPlayer = "#0f0f0f"
 blackBackground = "#050505"
@@ -96,6 +97,7 @@ class MainWindow():
         self.player.pack(fill=tk.X, side=BOTTOM)
 
         albumCover = ImageTk.PhotoImage(albumCoverPlaceholder)
+        albumCoverSmall = ImageTk.PhotoImage(albumCoverPlaceholderSmall)
         self.albumCover = Label(self.player, image=albumCover)
         self.albumCover.image = albumCover
         self.albumCover.pack(side=tk.RIGHT, padx=10, pady=5)
@@ -127,6 +129,9 @@ class MainWindow():
 
         self.updatePlaytime("1:10", "3:30")
 
+        self.searchResultItem = SearchResultItem(self.searchResults, songName="Song", artistName="Artist", albumName="Album", albumCover=albumCoverSmall)
+        self.searchResultItem.pack()
+
     def search(self, entry):
         pass
 
@@ -135,28 +140,24 @@ class MainWindow():
         self.currentPlaytime["text"] = currentPlaytime
         self.totalPlaytime["text"] = totalPlaytime
 
-class SearchResultItem():
-    def __init__(self):
-        self.root = tk.Tk()
+class SearchResultItem(tk.Frame):
+    def __init__(self, parent, songName, artistName, albumName, albumCover):
+        tk.Frame.__init__(self, parent)
 
-        self.root.config(bg=blackPlayer)
-
-        albumCover = ImageTk.PhotoImage(albumCoverPlaceholder)
-        self.albumCover = Label(self.root, image=albumCover)
+        #albumCover = ImageTk.PhotoImage(albumCoverPlaceholder)
+        self.albumCover = Label(self, image=albumCover)
         self.albumCover.image = albumCover
         self.albumCover.pack(side=tk.LEFT, padx=10, pady=5)
 
-        self.infoContainer = Frame(self.root, bg=blackPlayer)
+        self.infoContainer = Frame(self, bg=blackPlayer)
         self.infoContainer.pack(side=tk.LEFT, fill=tk.X)
 
-        self.songName = Label(self.infoContainer, text="SongName", font=fontMainBold, bg=blackPlayer, fg=textBrightHigh)
+        self.songName = Label(self.infoContainer, text=songName, font=fontMainBoldSmall, bg=blackPlayer, fg=textBrightHigh)
         self.songName.grid(row=0, column=0, padx=8, pady=15)
-        self.artistName = Label(self.infoContainer, text="ArtistName", font=fontMainBold, bg=blackPlayer, fg=textBrightMed)
+        self.artistName = Label(self.infoContainer, text=artistName, font=fontMainBoldSmall, bg=blackPlayer, fg=textBrightMed)
         self.artistName.grid(row=1, column=0, padx=8, pady=15)
-        self.albumName = Label(self.root, text="AlbumName", font=fontMainBold, bg=blackPlayer, fg=textBrightLow)
+        self.albumName = Label(self, text=albumName, font=fontMainBoldSmall, bg=blackPlayer, fg=textBrightLow)
         self.albumName.pack(side=tk.RIGHT, padx=8, pady=15)
-
-        self.root.mainloop()
 
 class stars():
     def __init__(self):
