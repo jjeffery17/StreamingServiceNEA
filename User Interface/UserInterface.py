@@ -5,7 +5,8 @@ from PIL import Image, ImageTk
 
 #set album cover placeholders
 albumCoverPlaceholder = Image.open("AlbumCoverPlaceholder.png")
-albumCoverPlaceholder = albumCoverPlaceholder.resize((100, 100), Image.ANTIALIAS)
+albumCoverPlaceholderLarge = albumCoverPlaceholder.resize((100, 100), Image.ANTIALIAS)
+albumCoverPlaceholderMed = albumCoverPlaceholder.resize((75, 75), Image.ANTIALIAS)
 albumCoverPlaceholderSmall = albumCoverPlaceholder.resize((50, 50), Image.ANTIALIAS)
 
 #set appearance variables
@@ -113,12 +114,13 @@ class MainWindow():
 
     def initViewport(self):
         self.initPlayer()
+        self.updateRecommendations()
 
     def initPlayer(self):
         self.player = Frame(self.root, bg=blackPlayer)
         self.player.pack(fill=tk.X, side=BOTTOM)
 
-        albumCover = ImageTk.PhotoImage(albumCoverPlaceholder)
+        albumCover = ImageTk.PhotoImage(albumCoverPlaceholderLarge)
         self.albumCover = Label(self.player, image=albumCover)
         self.albumCover.image = albumCover
         self.albumCover.pack(side=tk.RIGHT, padx=10, pady=5)
@@ -157,6 +159,17 @@ class MainWindow():
         self.currentPlaytime["text"] = currentPlaytime
         self.totalPlaytime["text"] = totalPlaytime
 
+    def updateRecommendations(self):
+        self.recommendationsHolder = Frame(self.root, bg=blackBackground)
+        self.recommendationsHolder.pack(fill=tk.BOTH, padx=15, pady=15)
+
+        albumCoverMed = ImageTk.PhotoImage(albumCoverPlaceholderMed)
+        self.recommendationCards = []
+        cardsPerRow = 3 #TODO: auto resize to screen size
+        for i in range(6):
+            self.card1 = RecommendationCard(self.recommendationsHolder, songName="Song", artistName="Artist", albumName="Album", albumCover=albumCoverMed)
+            self.card1.grid(row=i // cardsPerRow, column=i % cardsPerRow, padx=5, pady=5)
+
 class SearchResultItem(tk.Frame):
     def __init__(self, parent, songName, artistName, albumName, albumCover):
         tk.Frame.__init__(self, parent, bg=blackSearch)
@@ -188,5 +201,28 @@ class stars(tk.Frame):
         self.star3 = Button(self, text="3").grid(row=0, column=2)
         self.star4 = Button(self, text="4").grid(row=0, column=3)
         self.star5 = Button(self, text="5").grid(row=0, column=4)
+
+class RecommendationCard(tk.Frame):
+    def __init__(self, parent, songName, artistName, albumName, albumCover):
+        tk.Frame.__init__(self, parent, bg=blackBackground, highlightbackground=textBrightLow, highlightthickness=2)
+
+        self.albumCover = Label(self, image=albumCover)
+        self.albumCover.image = albumCover
+        self.albumCover.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.infoContainerLeft = Frame(self, bg=blackBackground)
+        self.infoContainerLeft.pack(side=tk.LEFT, fill=tk.X)
+        self.infoContainerRight = Frame(self, bg=blackBackground)
+        self.infoContainerRight.pack(side=tk.RIGHT, fill=tk.X, padx=(100, 10))
+
+        self.songName = Label(self.infoContainerLeft, text=songName, font=fontMainBold, bg=blackBackground, fg=textBrightHigh)
+        self.songName.grid(row=0, column=0, pady=5)
+        self.artistName = Label(self.infoContainerLeft, text=artistName, font=fontMainBoldSmall, bg=blackBackground, fg=textBrightMed)
+        self.artistName.grid(row=1, column=0, pady=5)
+        self.albumName = Label(self.infoContainerRight, text=albumName, font=fontMainBoldSmall, bg=blackBackground, fg=textBrightLow)
+        self.albumName.grid(row=0, column=0, pady=5)
+        self.currentSongStars = stars(self.infoContainerRight)
+        self.currentSongStars.grid(row=1, column=0, pady=5)
+
 
 MainWindow()
