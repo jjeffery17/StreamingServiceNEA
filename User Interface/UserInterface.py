@@ -224,5 +224,7 @@ class RecommendationCard(tk.Frame):
         self.currentSongStars = stars(self.infoContainerRight)
         self.currentSongStars.grid(row=1, column=0, pady=5)
 
+class artistPage():
+    pass
 
 MainWindow()

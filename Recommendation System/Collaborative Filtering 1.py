@@ -2,7 +2,7 @@ import numpy as np
 import time
 
 
-class CollaborativeFiltering():
+class collaborativeFiltering():
     def __init__(self, size=(100, 100)):
         #creating example array
         #array = np.zeros((5,10)) #empty array
@@ -23,7 +23,8 @@ class CollaborativeFiltering():
             return dot*reciprocal
 
     def find_recommendations(self):
-        startTotal = time.time() #measure efficiency
+        TotalTimer = time
+        startTotal = TotalTimer.time() #measure efficiency
         recommendations = []
         for user_index in range(len(self.array)): #iterating through users
             self.__startPartner = time.time()
@@ -44,21 +45,35 @@ class CollaborativeFiltering():
                     if self.array[most_similar_partner_index][item_index] > 0.8: #find if partner likes undiscovered item
                         recommendations.append([user_index, item_index])
             self.__endMovement = time.time()
-        endTotal = time.time()
+        endTotal = TotalTimer.time()
         print("Time to find partner:", (self.__endPartner - self.__startPartner)*self.array.shape[0], "s for", self.array.size, "items\n")
         print("Time to move:", self.__endMovement - self.__startMovement, "s for", self.array.size, "items\n")
         print("Time to recommend:", endTotal-startTotal, "s for", self.array.size, "items\n")
         return recommendations
 
-def testEfficiency():
+def testModelEfficiency():
     for x in range(4):
         for y in range(4):
             size = (10**x, 10**y)
-            model = CollaborativeFiltering(size=size)
+            model = collaborativeFiltering(size=size)
             model.find_recommendations()
             print(size)
 
-testEfficiency()
+testModelEfficiency()
+
+def testCosSimEfficiency():
+    model = collaborativeFiltering(size=(1, 1))
+
+    array = np.random.uniform(low=-1.0, high=1.0, size=(2, 100000000))
+    start = time.time()
+    model.cosine_similarity(array[0], array[1])
+    end = time.time()
+    print("Time for cosine similarity =", end-start)
+
+#testCosSimEfficiency()
+
+
+
 
 '''
 #outputing recommendations
