@@ -1,7 +1,15 @@
-class AudioPacket:
-    def __init__(self):
-        pass
-    def play(self):
-        pass
-    def send(self):
-        pass
+#get audio file
+
+#cut file into chunk
+
+#compress chunk
+
+#send chunk to user
+
+#recieve chunk
+
+#decompress chunk
+
+#queue and play chunk
+
+#delete played chunk
