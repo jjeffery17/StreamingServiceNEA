@@ -1,4 +1,8 @@
+from pydub import *
+
 #get audio file
+id = 1
+song = AudioSegment.from_wav(file="SampleAudio/wav/1.wav")
 
 #cut file into chunk
 

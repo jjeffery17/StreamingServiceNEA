@@ -137,6 +137,15 @@ class MainWindow(tk.Frame):
         self.playerInfoRight = Frame(self.playerInfo, bg=blackPlayer)
         self.playerInfoRight.pack(fill=tk.BOTH, side=tk.RIGHT)
 
+        self.controls = Frame(self.playerInfo, bg=blackPlayer)
+        self.controls.pack(side=tk.BOTTOM)
+        self.prev = Button(self.controls, text="⏪", font=fontStars, bg=blackPlayer, fg=textBrightHigh)
+        self.prev.grid(row=0, column=0, padx=5, pady=5)
+        self.pause = Button(self.controls, text="⏸", font=fontStars, bg=blackPlayer, fg=textBrightHigh) #play: ⏵
+        self.pause.grid(row=0, column=1, padx=5, pady=5)
+        self.next = Button(self.controls, text="⏩", font=fontStars, bg=blackPlayer, fg=textBrightHigh)
+        self.next.grid(row=0, column=2, padx=5, pady=5)
+
         self.playtimer = Scale(self.player, from_=0, to=1000, orient=HORIZONTAL, bg=blackPlayer, highlightbackground=blackPlayer, fg=blackPlayer, troughcolor=textBrightLow)
         self.playtimer.bind("<ButtonRelease-1>", func=self.updatePlaytimeStream)
         self.playtimer.pack(fill=tk.X, padx=8, pady=(10, 0))
