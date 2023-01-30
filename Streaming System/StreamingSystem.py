@@ -29,11 +29,16 @@ chunks.append(song[(len(song)//5000)*5000:]) #append last chunk
 
 #compress chunk
 bitrate = "192k"
+testQueue = 0
 for i in range(len(chunks)):
     location = "temp/"+str(id)+"-"+str(i)+".mp3"
     print(location)
+    if i >= 8:
+        testQueue = testQueue + chunks[i]
     #chunks[i].export(location, format=".mp3", bitrate=bitrate) #export compressed chunk to temporary folder
-song.export("/temp/song.mp3", format=".mp3", bitrate=bitrate)
+#song.export("/temp/song.mp3", format=".mp3", bitrate=bitrate)
+
+pydub.playback.play(testQueue)
 
 #send chunk to user
 

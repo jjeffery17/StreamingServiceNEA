@@ -4,7 +4,7 @@ from PIL import Image, ImageTk
 
 #set album cover placeholders
 albumCoverPlaceholder = Image.open("AlbumCoverPlaceholder.png")
-albumCoverPlaceholderLarge = albumCoverPlaceholder.resize((100, 100), Image.ANTIALIAS)
+albumCoverPlaceholderLarge = albumCoverPlaceholder.resize((125, 125), Image.ANTIALIAS)
 albumCoverPlaceholderMed = albumCoverPlaceholder.resize((75, 75), Image.ANTIALIAS)
 albumCoverPlaceholderSmall = albumCoverPlaceholder.resize((50, 50), Image.ANTIALIAS)
 
@@ -19,7 +19,8 @@ textBrightLow = "#c0c0c0"
 fontMainBold = ("Bierstadt", "12", "bold")
 fontMainBoldSmall = ("Bierstadt", "10", "bold")
 fontMainNorm = ("Bierstadt", "12")
-fontStars = ("Arial", "12")
+fontStars = ("Arial", "10")
+fontHidden = ("Arial", "1")
 
 #set playtime variables
 currentPlaytime = "0:00"
@@ -61,6 +62,8 @@ class MainWindow(tk.Frame):
         tk.Frame.__init__(self, parent, bg=blackBackground)
         self.initUI()
 
+        self.play = False
+
     def initUI(self):
         self.initHeader()
         self.initSearch()
@@ -83,6 +86,9 @@ class MainWindow(tk.Frame):
         self.searchbar = Frame(self.search, bg=blackSearch)
         self.searchbar.pack(fill=tk.X, side=tk.TOP, padx=10, pady=10)
 
+        self.searchTitle = Label(self.searchbar, text="Search", bg=blackSearch, fg=textBrightHigh, font=fontMainBold)
+        self.searchTitle.pack(side=tk.TOP, fill=tk.X, pady=5)
+
         self.searchButton = Button(self.searchbar, text="🔍")
         self.searchButton.pack(side=tk.LEFT)
 
@@ -103,15 +109,6 @@ class MainWindow(tk.Frame):
         for i in range(5):
             self.searchResultItems.append(SearchResultItem(self.searchResultItemsContainer, songName="Song", artistName="Artist", albumName="Album", albumCover=albumCoverSmall))
             self.searchResultItems[i].pack(fill=tk.X)
-
-        '''
-        #scrollbar
-        self.searchResultsScrollbar = Scrollbar(self.searchResults, orient="vertical", bg=blackSearch, command=self.searchResultItemsContainer.yview)
-        self.searchResultsScrollbar.grid(row=0, column=1, sticky=tk.NS)
-
-        self.searchResultItemsContainer.configure(yscrollcommand=self.searchResultsScrollbar.set)
-        self.searchResultItemsContainer.bind("<Configure>", lambda e: self.searchResultItemsContainer.configure(scrollregion=self.searchResultsScrollbar.bbox("all")))
-        '''
 
     def search(self, entry):
         pass
@@ -139,16 +136,19 @@ class MainWindow(tk.Frame):
 
         self.controls = Frame(self.playerInfo, bg=blackPlayer)
         self.controls.pack(side=tk.BOTTOM)
-        self.prev = Button(self.controls, text="⏪", font=fontStars, bg=blackPlayer, fg=textBrightHigh)
-        self.prev.grid(row=0, column=0, padx=5, pady=5)
-        self.pause = Button(self.controls, text="⏸", font=fontStars, bg=blackPlayer, fg=textBrightHigh) #play: ⏵
-        self.pause.grid(row=0, column=1, padx=5, pady=5)
-        self.next = Button(self.controls, text="⏩", font=fontStars, bg=blackPlayer, fg=textBrightHigh)
-        self.next.grid(row=0, column=2, padx=5, pady=5)
+        self.prev = Button(self.controls, text="⏪"
+                           , font=fontStars, bg=blackSearch, fg=textBrightHigh, activebackground=blackPlayer, activeforeground=textBrightHigh)
+        self.prev.grid(row=0, column=0, padx=5)
+        self.pause = Button(self.controls, text="⏵", command=self.pausePlay
+                            , font=fontStars, bg=blackSearch, fg=textBrightHigh, activebackground=blackPlayer, activeforeground=textBrightHigh) #play: ⏸
+        self.pause.grid(row=0, column=1, padx=5)
+        self.next = Button(self.controls, text="⏩"
+                           , font=fontStars, bg=blackSearch, fg=textBrightHigh, activebackground=blackPlayer, activeforeground=textBrightHigh)
+        self.next.grid(row=0, column=2, padx=5)
 
-        self.playtimer = Scale(self.player, from_=0, to=1000, orient=HORIZONTAL, bg=blackPlayer, highlightbackground=blackPlayer, fg=blackPlayer, troughcolor=textBrightLow)
+        self.playtimer = Scale(self.player, from_=0, to=1000, orient=HORIZONTAL, bg=blackPlayer, highlightbackground=blackPlayer, fg=blackPlayer, troughcolor=textBrightLow, font=fontHidden)
         self.playtimer.bind("<ButtonRelease-1>", func=self.updatePlaytimeStream)
-        self.playtimer.pack(fill=tk.X, padx=8, pady=(10, 0))
+        self.playtimer.pack(fill=tk.X, padx=8, pady=(2, 0))
 
         self.playtimeInfoContainer = Frame(self.player, bg=blackPlayer)
         self.playtimeInfoContainer.pack(fill=tk.BOTH, side=tk.BOTTOM)
@@ -187,14 +187,22 @@ class MainWindow(tk.Frame):
             self.card1 = RecommendationCard(self.recommendationsHolder, songName="Song", artistName="Artist", albumName="Album", albumCover=albumCoverMed)
             self.card1.grid(row=i // cardsPerRow, column=i % cardsPerRow, padx=5, pady=5)
 
+    def pausePlay(self):
+        if self.play:
+            self.play = False
+            self.pause.config(text="⏵")
+        else:
+            self.play = True
+            self.pause.config(text="⏸")
+
 class SearchResultItem(tk.Frame):
     def __init__(self, parent, songName, artistName, albumName, albumCover):
-        tk.Frame.__init__(self, parent, bg=blackSearch, highlightbackground=textBrightLow, highlightthickness=1)
+        tk.Frame.__init__(self, parent, bg=blackSearch, padx=5, pady=5)
 
         #albumCover = ImageTk.PhotoImage(albumCoverPlaceholder)
         self.albumCover = Label(self, image=albumCover)
         self.albumCover.image = albumCover
-        self.albumCover.pack(side=tk.LEFT, padx=5, pady=5)
+        self.albumCover.pack(side=tk.LEFT, pady=5)
 
         self.infoContainerLeft = Frame(self, bg=blackSearch)
         self.infoContainerLeft.pack(side=tk.LEFT, fill=tk.X)
@@ -224,14 +232,19 @@ class stars(tk.Frame):
 
     def updateButtons(self):
         try:
-            del self.star1, self.star2, self.star3, self.star4, self.star5
+            del self.star1, self.star2, self.star3, self.star4, self.star5 #deleting stars if they already exist
         except AttributeError:
             pass
-        self.star1 = Button(self, text=self.starsArr[0], font=fontStars, command=lambda: self.updateStars(starCount=1)).grid(row=0, column=0)
-        self.star2 = Button(self, text=self.starsArr[1], font=fontStars, command=lambda: self.updateStars(starCount=2)).grid(row=0, column=1)
-        self.star3 = Button(self, text=self.starsArr[2], font=fontStars, command=lambda: self.updateStars(starCount=3)).grid(row=0, column=2)
-        self.star4 = Button(self, text=self.starsArr[3], font=fontStars, command=lambda: self.updateStars(starCount=4)).grid(row=0, column=3)
-        self.star5 = Button(self, text=self.starsArr[4], font=fontStars, command=lambda: self.updateStars(starCount=5)).grid(row=0, column=4)
+        self.star1 = Button(self, text=self.starsArr[0], font=fontStars, command=lambda: self.updateStars(starCount=1)
+                            , bg=blackSearch, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh).grid(row=0, column=0)
+        self.star2 = Button(self, text=self.starsArr[1], font=fontStars, command=lambda: self.updateStars(starCount=2)
+                            , bg=blackSearch, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh).grid(row=0, column=1)
+        self.star3 = Button(self, text=self.starsArr[2], font=fontStars, command=lambda: self.updateStars(starCount=3)
+                            , bg=blackSearch, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh).grid(row=0, column=2)
+        self.star4 = Button(self, text=self.starsArr[3], font=fontStars, command=lambda: self.updateStars(starCount=4)
+                            , bg=blackSearch, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh).grid(row=0, column=3)
+        self.star5 = Button(self, text=self.starsArr[4], font=fontStars, command=lambda: self.updateStars(starCount=5)
+                            , bg=blackSearch, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh).grid(row=0, column=4)
 
 class RecommendationCard(tk.Frame):
     def __init__(self, parent, songName, artistName, albumName, albumCover):
