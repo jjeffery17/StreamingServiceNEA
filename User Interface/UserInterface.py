@@ -17,6 +17,7 @@ textBrightMed = "#e8e8e8"
 textBrightLow = "#c0c0c0"
 
 fontMainBold = ("Bierstadt", "12", "bold")
+fontMainBoldTitle = ("Bierstadt", "24", "bold")
 fontMainBoldSmall = ("Bierstadt", "10", "bold")
 fontMainNorm = ("Bierstadt", "12")
 fontStars = ("Arial", "10")
@@ -45,6 +46,13 @@ def playtimeToSeconds(playtime):
 
     return (mins*60)+secs
 
+def invertColour(colour):
+    r = int(colour[1:3], 16) #get rgb values as integers
+    g = int(colour[3:5], 16)
+    b = int(colour[5:7], 16)
+    r, g, b = 255-r, 255-g, 255-b #invert values
+    return "#"+str(hex(r))[2:].zfill(2)+str(hex(g))[2:].zfill(2)+str(hex(b))[2:].zfill(2) #format and output
+
 class window():
     def __init__(self):
         self.root = tk.Tk()
@@ -53,9 +61,34 @@ class window():
         self.root.config(bg=blackBackground)
         self.root.geometry("1280x720") #default screen size
 
-        self.MainWindow = MainWindow(self.root)
-        self.MainWindow.pack(fill=tk.BOTH, expand=True)
+        #self.MainWindow = MainWindow(self.root)
+        #self.MainWindow.pack(fill=tk.BOTH, expand=True)
+        self.artistWindow = artistWindow(self.root)
+        self.artistWindow.pack(fill=tk.BOTH, expand=True)
         self.root.mainloop()
+
+class artistWindow(tk.Frame):
+    def __init__(self, parent):
+        tk.Frame.__init__(self, parent, bg=blackBackground)
+        self.artistColour = "#01112b"
+        self.artistName = "Artist Name"
+        self.pinnedSongsID = []
+        self.pinnedAlbumID = 0
+        self.initHeader()
+
+    def initHeader(self):
+        self.header = Frame(self, bg=self.artistColour)
+        self.header.pack(fill=tk.BOTH)
+
+        self.backContainer = Frame(self.header, bg=self.artistColour)
+        self.backContainer.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
+        self.back = Button(self.backContainer, text="← Back", bg=blackPlayer, fg=textBrightLow)
+        self.back.pack(side=tk.TOP)
+
+        self.name = Label(self.header, text=self.artistName, font=fontMainBoldTitle, bg=self.artistColour, fg=invertColour(self.artistColour))
+        self.name.pack(side=tk.RIGHT, padx=10, pady=10)
+
+
 
 class MainWindow(tk.Frame):
     def __init__(self, parent):
@@ -268,7 +301,5 @@ class RecommendationCard(tk.Frame):
         self.currentSongStars = stars(self.infoContainerRight)
         self.currentSongStars.grid(row=1, column=0, pady=5)
 
-class artistPage():
-    pass
 
 window()
