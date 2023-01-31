@@ -71,10 +71,12 @@ class artistWindow(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent, bg=blackBackground)
         self.artistColour = "#01112b"
+        self.artistHighlight = invertColour(self.artistColour)
         self.artistName = "Artist Name"
-        self.pinnedSongsID = []
+        self.pinnedSongsID = [0, 0, 0, 0, 0]
         self.pinnedAlbumID = 0
         self.initHeader()
+        self.initHighlightBar()
 
     def initHeader(self):
         self.header = Frame(self, bg=self.artistColour)
@@ -82,13 +84,27 @@ class artistWindow(tk.Frame):
 
         self.backContainer = Frame(self.header, bg=self.artistColour)
         self.backContainer.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
-        self.back = Button(self.backContainer, text="← Back", bg=blackPlayer, fg=textBrightLow)
+        self.back = Button(self.backContainer, text="← Back", bg=blackPlayer, fg=textBrightLow, font=fontMainBoldSmall)
         self.back.pack(side=tk.TOP)
 
-        self.name = Label(self.header, text=self.artistName, font=fontMainBoldTitle, bg=self.artistColour, fg=invertColour(self.artistColour))
+        self.name = Label(self.header, text=self.artistName, font=fontMainBoldTitle, bg=self.artistColour, fg=self.artistHighlight)
         self.name.pack(side=tk.RIGHT, padx=10, pady=10)
 
+    def initHighlightBar(self):
+        self.highlightBar = Frame(self, bg=blackSearch)
+        self.highlightBar.pack(side=tk.RIGHT, fill=tk.Y)
 
+        albumCoverLarge = ImageTk.PhotoImage(albumCoverPlaceholderLarge)
+        #self.pinnedAlbumID
+        self.albumCard = albumCard(self.highlightBar, "Artist Name", "Album Name", albumCoverLarge, [0, 0, 0])
+        self.albumCard.pack(side=tk.TOP, padx=10, pady=10)
+
+        albumCoverSmall = ImageTk.PhotoImage(albumCoverPlaceholderSmall)
+        self.pinnedSongsList = []
+        for songID in self.pinnedSongsID:
+            self.pinnedSongsList.append(SearchResultItem(self.highlightBar, "Song Name", "Artist Name", "Album Name", albumCoverSmall))
+        for pinnedSong in self.pinnedSongsList:
+            pinnedSong.pack(padx=10)
 
 class MainWindow(tk.Frame):
     def __init__(self, parent):
@@ -217,7 +233,7 @@ class MainWindow(tk.Frame):
         self.recommendationCards = []
         cardsPerRow = 3 #TODO: auto resize to screen size
         for i in range(6):
-            self.card1 = RecommendationCard(self.recommendationsHolder, songName="Song", artistName="Artist", albumName="Album", albumCover=albumCoverMed)
+            self.card1 = recommendationCard(self.recommendationsHolder, songName="Song", artistName="Artist", albumName="Album", albumCover=albumCoverMed)
             self.card1.grid(row=i // cardsPerRow, column=i % cardsPerRow, padx=5, pady=5)
 
     def pausePlay(self):
@@ -279,7 +295,7 @@ class stars(tk.Frame):
         self.star5 = Button(self, text=self.starsArr[4], font=fontStars, command=lambda: self.updateStars(starCount=5)
                             , bg=blackSearch, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh).grid(row=0, column=4)
 
-class RecommendationCard(tk.Frame):
+class recommendationCard(tk.Frame):
     def __init__(self, parent, songName, artistName, albumName, albumCover):
         tk.Frame.__init__(self, parent, bg=blackBackground, highlightbackground=textBrightLow, highlightthickness=2)
 
@@ -300,6 +316,29 @@ class RecommendationCard(tk.Frame):
         self.albumName.grid(row=0, column=0, pady=5)
         self.currentSongStars = stars(self.infoContainerRight)
         self.currentSongStars.grid(row=1, column=0, pady=5)
+
+class albumCard(tk.Frame):
+    def __init__(self, parent, artistName, albumName, albumCover, topSongID):
+        tk.Frame.__init__(self, parent, bg=blackPlayer, highlightbackground=textBrightLow, highlightthickness=2)
+
+        self.albumCover = Label(self, image=albumCover)
+        self.albumCover.image = albumCover
+        self.albumCover.pack(side=tk.TOP, padx=10, pady=10)
+
+        self.albumName = Label(self, text=albumName, bg=blackPlayer, fg=textBrightHigh, font=fontMainBold)
+        self.albumName.pack(fill=tk.X, pady=(0, 2))
+
+        self.topSongsContainer = Frame(self, bg=blackPlayer)
+        self.topSongsContainer.pack(side=tk.TOP)
+
+        self.topSongsList = []
+        for songID in topSongID:
+            self.topSongsList.append(Label(self.topSongsContainer, text="〔 "+"Top Song "+str(songID)+" 〕", bg=blackPlayer, fg=textBrightLow, font=fontMainBoldSmall))
+        for topSongNum in range(len(self.topSongsList)):
+            self.topSongsList[topSongNum].grid(row=topSongNum, column=1)
+
+        self.spacer = Frame(self, width=0, height=0, bg=blackPlayer)
+        self.spacer.pack(pady=3)
 
 
 window()
