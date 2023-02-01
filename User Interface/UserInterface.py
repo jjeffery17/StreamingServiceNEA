@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import *
+from tkinter import ttk
 from PIL import Image, ImageTk
 
 #set album cover placeholders
@@ -78,6 +79,11 @@ class artistWindow(tk.Frame):
         self.initHeader()
         self.initHighlightBar()
 
+        emptyList = []
+        for i in range(26):
+            emptyList.append(0)
+        self.initMain(emptyList)
+
     def initHeader(self):
         self.header = Frame(self, bg=self.artistColour)
         self.header.pack(fill=tk.BOTH)
@@ -105,6 +111,29 @@ class artistWindow(tk.Frame):
             self.pinnedSongsList.append(SearchResultItem(self.highlightBar, "Song Name", "Artist Name", "Album Name", albumCoverSmall))
         for pinnedSong in self.pinnedSongsList:
             pinnedSong.pack(padx=10)
+
+    def initMain(self, artistAlbumID):
+        container = Frame(self, bg=blackBackground)
+        container.pack(fill=tk.BOTH, padx=10, pady=10)
+        albumContainer = Canvas(container, bg=blackBackground, height=175)
+        albumContainer.pack(fill=tk.BOTH)
+
+        albumWidgetContainer = Frame(albumContainer, bg=blackBackground)
+        albumContainer.create_window((0, 0), window=albumWidgetContainer, anchor="nw")
+
+        albumCoverSmall = ImageTk.PhotoImage(albumCoverPlaceholderSmall)
+        albumWidgetList = []
+        for albumID in artistAlbumID:
+            albumWidgetList.append(
+                albumCard(albumWidgetContainer, "Artist Name", "Album Name", albumCoverSmall, [0, 0, 0]))
+        for i in range(len(albumWidgetList)):
+            albumWidgetList[i].grid(row=0, column=i, padx=(0, 5))
+
+        albumScrollbar = ttk.Scrollbar(container, orient=tk.HORIZONTAL, command=albumContainer.xview)
+        albumScrollbar.pack(side=tk.TOP, fill=tk.X)
+
+        albumContainer.configure(xscrollcommand=albumScrollbar.set)
+        albumContainer.bind("<Configure>", lambda e: albumContainer.configure(scrollregion=albumContainer.bbox("all")))
 
 class MainWindow(tk.Frame):
     def __init__(self, parent):
