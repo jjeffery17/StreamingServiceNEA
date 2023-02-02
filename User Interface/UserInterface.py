@@ -5,6 +5,7 @@ from PIL import Image, ImageTk
 
 #set album cover placeholders
 albumCoverPlaceholder = Image.open("AlbumCoverPlaceholder.png")
+albumCoverPlaceholderMassive = albumCoverPlaceholder.resize((350, 350), Image.ANTIALIAS)
 albumCoverPlaceholderLarge = albumCoverPlaceholder.resize((125, 125), Image.ANTIALIAS)
 albumCoverPlaceholderMed = albumCoverPlaceholder.resize((75, 75), Image.ANTIALIAS)
 albumCoverPlaceholderSmall = albumCoverPlaceholder.resize((50, 50), Image.ANTIALIAS)
@@ -64,20 +65,25 @@ class window():
 
         #self.MainWindow = MainWindow(self.root)
         #self.MainWindow.pack(fill=tk.BOTH, expand=True)
-        self.artistWindow = artistWindow(self.root)
-        self.artistWindow.pack(fill=tk.BOTH, expand=True)
+        #self.artistWindow = artistWindow(self.root, 0)
+        #self.artistWindow.pack(fill=tk.BOTH, expand=True)
+        self.albumWindow = albumWindow(self.root, 0)
+        self.albumWindow.pack(fill=tk.BOTH, expand=True)
         self.root.mainloop()
 
 class artistWindow(tk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, artistID):
         tk.Frame.__init__(self, parent, bg=blackBackground)
         self.artistColour = "#01112b"
         self.artistHighlight = invertColour(self.artistColour)
-        self.artistName = "Artist Name"
+        self.artistName = "Artist "+str(artistID)
         self.pinnedSongsID = [0, 0, 0, 0, 0]
         self.pinnedAlbumID = 0
         self.initHeader()
         self.initHighlightBar()
+
+        style = ttk.Style()
+        style.theme_use("clam")
 
         emptyList = []
         for i in range(26):
@@ -93,8 +99,17 @@ class artistWindow(tk.Frame):
         self.back = Button(self.backContainer, text="← Back", bg=blackPlayer, fg=textBrightLow, font=fontMainBoldSmall)
         self.back.pack(side=tk.TOP)
 
-        self.name = Label(self.header, text=self.artistName, font=fontMainBoldTitle, bg=self.artistColour, fg=self.artistHighlight)
-        self.name.pack(side=tk.RIGHT, padx=10, pady=10)
+        self.artistContainer = Frame(self.header, bg=self.artistColour)
+        self.artistContainer.pack(side=tk.RIGHT, padx=10, pady=10)
+
+        self.name = Label(self.artistContainer, text=self.artistName, font=fontMainBoldTitle, bg=self.artistColour, fg=self.artistHighlight)
+        self.name.grid(row=0, column=0)
+
+        self.artistRating = stars(self.artistContainer)
+        self.artistRating.grid(row=1, column=0, pady=(10, 2), sticky=tk.E)
+
+        self.artistRatingAvg = Label(self.artistContainer, text="Average rating: "+str(3)+" stars", font=fontMainBoldSmall, bg=self.artistColour, fg=self.artistHighlight)
+        self.artistRatingAvg.grid(row=2, column=0, sticky=tk.E)
 
     def initHighlightBar(self):
         self.highlightBar = Frame(self, bg=blackSearch)
@@ -115,19 +130,19 @@ class artistWindow(tk.Frame):
     def initMain(self, artistAlbumID):
         container = Frame(self, bg=blackBackground)
         container.pack(fill=tk.BOTH, padx=10, pady=10)
-        albumContainer = Canvas(container, bg=blackBackground, height=175)
+        albumContainer = Canvas(container, bg=blackBackground, height=570)
         albumContainer.pack(fill=tk.BOTH)
 
         albumWidgetContainer = Frame(albumContainer, bg=blackBackground)
         albumContainer.create_window((0, 0), window=albumWidgetContainer, anchor="nw")
 
-        albumCoverSmall = ImageTk.PhotoImage(albumCoverPlaceholderSmall)
+        albumCoverLarge = ImageTk.PhotoImage(albumCoverPlaceholderLarge)
         albumWidgetList = []
         for albumID in artistAlbumID:
             albumWidgetList.append(
-                albumCard(albumWidgetContainer, "Artist Name", "Album Name", albumCoverSmall, [0, 0, 0]))
+                albumCard(albumWidgetContainer, "Artist Name", "Album Name", albumCoverLarge, [0, 0, 0]))
         for i in range(len(albumWidgetList)):
-            albumWidgetList[i].grid(row=0, column=i, padx=(0, 5))
+            albumWidgetList[i].grid(row=i%2, column=i//2, padx=(0, 5), pady=1)
 
         albumScrollbar = ttk.Scrollbar(container, orient=tk.HORIZONTAL, command=albumContainer.xview)
         albumScrollbar.pack(side=tk.TOP, fill=tk.X)
@@ -135,11 +150,68 @@ class artistWindow(tk.Frame):
         albumContainer.configure(xscrollcommand=albumScrollbar.set)
         albumContainer.bind("<Configure>", lambda e: albumContainer.configure(scrollregion=albumContainer.bbox("all")))
 
+class albumWindow(tk.Frame):
+    def __init__(self, parent, artistID):
+        tk.Frame.__init__(self, parent, bg=blackBackground)
+        self.albumColour = "#01112b"
+        self.albumHighlight = invertColour(self.albumColour)
+        self.albumName = "Album " + str(artistID)
+        self.albumCoverMassive = ImageTk.PhotoImage(albumCoverPlaceholderMassive)
+        self.initHeader()
+        style = ttk.Style().theme_use("clam")
+        emptyList = []
+        for i in range(26):
+            emptyList.append(0)
+        self.initMain(emptyList)
+
+    def initHeader(self):
+        self.header = Frame(self, bg=self.albumColour)
+        self.header.pack(fill=tk.Y, side=tk.LEFT)
+
+        self.backContainer = Frame(self.header, bg=self.albumColour)
+        self.backContainer.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
+        self.back = Button(self.backContainer, text="← Back", bg=blackPlayer, fg=textBrightLow, font=fontMainBoldSmall)
+        self.back.pack(side=tk.LEFT)
+
+        self.albumContainer = Frame(self.header, bg=self.albumColour)
+        self.albumContainer.pack(padx=10, pady=10, expand=True)
+
+        self.albumCover = Label(self.albumContainer, image=self.albumCoverMassive)
+        self.albumCover.grid(row=0, column=0, padx=25, pady=25)
+        self.name = Label(self.albumContainer, text=self.albumName, font=fontMainBoldTitle, bg=self.albumColour, fg=self.albumHighlight)
+        self.name.grid(row=1, column=0)
+        self.albumRating = stars(self.albumContainer)
+        self.albumRating.grid(row=2, column=0, pady=(10, 2))
+        self.albumRatingAvg = Label(self.albumContainer, text="Average rating: " + str(3) + " stars", font=fontMainBoldSmall, bg=self.albumColour, fg=self.albumHighlight)
+        self.albumRatingAvg.grid(row=3, column=0)
+
+    def initMain(self, songIDs):
+        container = Frame(self, bg=blackBackground)
+        container.pack(fill=tk.BOTH, padx=10, pady=10)
+        container.columnconfigure(0, weight=1)
+        songContainer = Canvas(container, bg=blackBackground, height=690)
+        songContainer.pack(side=tk.RIGHT, fill=tk.X, expand=True)
+
+        songWidgetContainer = Frame(songContainer, bg=blackBackground)
+        songContainer.create_window((0, 0), window=songWidgetContainer, anchor="n")
+
+        albumCoverSmall = ImageTk.PhotoImage(albumCoverPlaceholderSmall)
+        songWidgetList = []
+        for songID in songIDs:
+            songWidgetList.append(SearchResultItem(songWidgetContainer, "Song "+str(songID), "Artist Name", "Album Name", albumCoverSmall))
+        for i in range(len(songWidgetList)):
+            songWidgetList[i].pack(fill=tk.X, side=tk.TOP)
+
+        albumScrollbar = ttk.Scrollbar(container, orient=tk.VERTICAL, command=songContainer.yview)
+        albumScrollbar.pack(side=tk.LEFT, fill=tk.Y)
+
+        songContainer.configure(yscrollcommand=albumScrollbar.set)
+        songContainer.bind("<Configure>", lambda e: songContainer.configure(scrollregion=songContainer.bbox("all")))
+
 class MainWindow(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent, bg=blackBackground)
         self.initUI()
-
         self.play = False
 
     def initUI(self):
@@ -354,8 +426,11 @@ class albumCard(tk.Frame):
         self.albumCover.image = albumCover
         self.albumCover.pack(side=tk.TOP, padx=10, pady=10)
 
+        self.albumRating = stars(self)
+        self.albumRating.pack()
+
         self.albumName = Label(self, text=albumName, bg=blackPlayer, fg=textBrightHigh, font=fontMainBold)
-        self.albumName.pack(fill=tk.X, pady=(0, 2))
+        self.albumName.pack(fill=tk.X, pady=(5, 0))
 
         self.topSongsContainer = Frame(self, bg=blackPlayer)
         self.topSongsContainer.pack(side=tk.TOP)
