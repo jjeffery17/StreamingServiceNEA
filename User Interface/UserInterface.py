@@ -63,16 +63,36 @@ class window():
         self.root.config(bg=blackBackground)
         self.root.geometry("1280x720") #default screen size
 
-        #self.MainWindow = MainWindow(self.root)
+        #self.MainWindow = MainWindow(self.root, self)
         #self.MainWindow.pack(fill=tk.BOTH, expand=True)
-        #self.artistWindow = artistWindow(self.root, 0)
+        #self.artistWindow = artistWindow(self.root, 0, self)
         #self.artistWindow.pack(fill=tk.BOTH, expand=True)
-        self.albumWindow = albumWindow(self.root, 0)
+        self.albumWindow = albumWindow(self.root, 0, self)
         self.albumWindow.pack(fill=tk.BOTH, expand=True)
         self.root.mainloop()
 
+    def changeWindow(self, currentWindow, newWindow="main", artistID=0, albumID=0):
+        if newWindow == "main":
+            currentWindow.pack_forget()
+            del currentWindow
+            self.MainWindow = MainWindow(self.root, self)
+            self.MainWindow.pack(fill=tk.BOTH, expand=True)
+        elif newWindow == "album":
+            currentWindow.pack_forget()
+            del currentWindow
+            self.albumWindow = albumWindow(self.root, albumID, self)
+            self.albumWindow.pack(fill=tk.BOTH, expand=True)
+        elif newWindow == "artist":
+            currentWindow.pack_forget()
+            del currentWindow
+            self.artistWindow = artistWindow(self.root, artistID, self)
+            self.artistWindow.pack(fill=tk.BOTH, expand=True)
+        else:
+            print("Error: no new window with name:", newWindow, "to change to")
+
 class artistWindow(tk.Frame):
-    def __init__(self, parent, artistID):
+    def __init__(self, parent, artistID, window):
+        self.window = window
         tk.Frame.__init__(self, parent, bg=blackBackground)
         self.artistColour = "#01112b"
         self.artistHighlight = invertColour(self.artistColour)
@@ -96,8 +116,8 @@ class artistWindow(tk.Frame):
 
         self.backContainer = Frame(self.header, bg=self.artistColour)
         self.backContainer.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
-        self.back = Button(self.backContainer, text="← Back", bg=blackPlayer, fg=textBrightLow, font=fontMainBoldSmall)
-        self.back.pack(side=tk.TOP)
+        self.backButton = Button(self.backContainer, text="← Back", bg=blackPlayer, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh, font=fontMainBoldSmall, command=self.back)
+        self.backButton.pack(side=tk.TOP)
 
         self.artistContainer = Frame(self.header, bg=self.artistColour)
         self.artistContainer.pack(side=tk.RIGHT, padx=10, pady=10)
@@ -150,12 +170,16 @@ class artistWindow(tk.Frame):
         albumContainer.configure(xscrollcommand=albumScrollbar.set)
         albumContainer.bind("<Configure>", lambda e: albumContainer.configure(scrollregion=albumContainer.bbox("all")))
 
+    def back(self):
+        self.window.changeWindow(currentWindow=self, newWindow="main")
+
 class albumWindow(tk.Frame):
-    def __init__(self, parent, artistID):
+    def __init__(self, parent, albumID, window):
+        self.window = window
         tk.Frame.__init__(self, parent, bg=blackBackground)
         self.albumColour = "#01112b"
         self.albumHighlight = invertColour(self.albumColour)
-        self.albumName = "Album " + str(artistID)
+        self.albumName = "Album " + str(albumID)
         self.albumCoverMassive = ImageTk.PhotoImage(albumCoverPlaceholderMassive)
         self.initHeader()
         style = ttk.Style().theme_use("clam")
@@ -170,8 +194,8 @@ class albumWindow(tk.Frame):
 
         self.backContainer = Frame(self.header, bg=self.albumColour)
         self.backContainer.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
-        self.back = Button(self.backContainer, text="← Back", bg=blackPlayer, fg=textBrightLow, font=fontMainBoldSmall)
-        self.back.pack(side=tk.LEFT)
+        self.backButton = Button(self.backContainer, text="← Back", bg=blackPlayer, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh, font=fontMainBoldSmall, command=self.back)
+        self.backButton.pack(side=tk.LEFT)
 
         self.albumContainer = Frame(self.header, bg=self.albumColour)
         self.albumContainer.pack(padx=10, pady=10, expand=True)
@@ -208,9 +232,13 @@ class albumWindow(tk.Frame):
         songContainer.configure(yscrollcommand=albumScrollbar.set)
         songContainer.bind("<Configure>", lambda e: songContainer.configure(scrollregion=songContainer.bbox("all")))
 
+    def back(self):
+        self.window.changeWindow(currentWindow=self, newWindow="main")
+
 class MainWindow(tk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, window):
         tk.Frame.__init__(self, parent, bg=blackBackground)
+        self.window = window
         self.initUI()
         self.play = False
 
@@ -226,7 +254,7 @@ class MainWindow(tk.Frame):
         self.logo = Label(self.header, text="LOGO")
         self.logo.pack(padx=15, pady=15, side=tk.LEFT)
 
-        self.login = Button(self.header, font=fontMainBoldSmall, text="Log In")
+        self.login = Button(self.header, bg=blackPlayer, fg=textBrightHigh, activebackground=blackPlayer, activeforeground=textBrightHigh, font=fontMainBoldSmall, text="Log In")
         self.login.pack(padx=15, pady=15, side=tk.RIGHT)
 
     def initSearch(self):
@@ -332,10 +360,10 @@ class MainWindow(tk.Frame):
 
         albumCoverMed = ImageTk.PhotoImage(albumCoverPlaceholderMed)
         self.recommendationCards = []
-        cardsPerRow = 3 #TODO: auto resize to screen size
+        cardsPerRow = 3 #TODO: auto resize to screen size, make scrollable
         for i in range(6):
-            self.card1 = recommendationCard(self.recommendationsHolder, songName="Song", artistName="Artist", albumName="Album", albumCover=albumCoverMed)
-            self.card1.grid(row=i // cardsPerRow, column=i % cardsPerRow, padx=5, pady=5)
+            self.card = recommendationCard(self.recommendationsHolder, window=self.window, owningWidget=self, songID=0, artistID=0, albumID=0, albumCover=albumCoverMed)
+            self.card.grid(row=i // cardsPerRow, column=i % cardsPerRow, padx=5, pady=5)
 
     def pausePlay(self):
         if self.play:
@@ -397,8 +425,14 @@ class stars(tk.Frame):
                             , bg=blackSearch, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh).grid(row=0, column=4)
 
 class recommendationCard(tk.Frame):
-    def __init__(self, parent, songName, artistName, albumName, albumCover):
+    def __init__(self, parent, window, owningWidget, songID, artistID, albumID, albumCover):
+        self.window = window
+        self.owningWidget = owningWidget
         tk.Frame.__init__(self, parent, bg=blackBackground, highlightbackground=textBrightLow, highlightthickness=2)
+
+        self.songID = songID
+        self.albumID = albumID
+        self.artistID = artistID
 
         self.albumCover = Label(self, image=albumCover)
         self.albumCover.image = albumCover
@@ -409,14 +443,20 @@ class recommendationCard(tk.Frame):
         self.infoContainerRight = Frame(self, bg=blackBackground)
         self.infoContainerRight.pack(side=tk.RIGHT, fill=tk.X, padx=(100, 10))
 
-        self.songName = Label(self.infoContainerLeft, text=songName, font=fontMainBold, bg=blackBackground, fg=textBrightHigh)
+        self.songName = Label(self.infoContainerLeft, text=str(songID), font=fontMainBold, bg=blackBackground, fg=textBrightHigh)
         self.songName.grid(row=0, column=0, pady=5)
-        self.artistName = Label(self.infoContainerLeft, text=artistName, font=fontMainBoldSmall, bg=blackBackground, fg=textBrightMed)
+        self.artistName = Button(self.infoContainerLeft, text=str(artistID), font=fontMainBoldSmall, bg=blackBackground, fg=textBrightMed, activebackground=blackPlayer, activeforeground=textBrightHigh, command=self.openArtist)
         self.artistName.grid(row=1, column=0, pady=5)
-        self.albumName = Label(self.infoContainerRight, text=albumName, font=fontMainBoldSmall, bg=blackBackground, fg=textBrightLow)
-        self.albumName.grid(row=0, column=0, pady=5)
+        self.albumName = Button(self.infoContainerRight, text=str(albumID), font=fontMainBoldSmall, bg=blackBackground, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh, command=self.openAlbum)
+        self.albumName.grid(row=0, column=0, pady=5, sticky="e")
         self.currentSongStars = stars(self.infoContainerRight)
         self.currentSongStars.grid(row=1, column=0, pady=5)
+
+    def openArtist(self):
+        self.window.changeWindow(currentWindow=self.owningWidget, newWindow="artist", artistID=self.artistID)
+
+    def openAlbum(self):
+        self.window.changeWindow(currentWindow=self.owningWidget, newWindow="album", artistID=self.albumID)
 
 class albumCard(tk.Frame):
     def __init__(self, parent, artistName, albumName, albumCover, topSongID):
@@ -445,4 +485,4 @@ class albumCard(tk.Frame):
         self.spacer.pack(pady=3)
 
 
-window()
+UserWindow = window()
