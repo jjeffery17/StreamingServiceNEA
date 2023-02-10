@@ -87,11 +87,11 @@ class Window:
         self.visitedWindows = Stack()
         self.visitedWindows.push("main")
 
-        #self.MainWindow = MainWindow(self.root, self)
-        #self.MainWindow.pack(fill=tk.BOTH, expand=True)
+        self.MainWindow = MainWindow(self.root, self)
+        self.MainWindow.pack(fill=tk.BOTH, expand=True)
 
-        self.LogIn = LogIn(self.root, self)
-        self.LogIn.pack(fill=tk.BOTH, expand=True)
+        #self.LogIn = LogIn(self.root, self)
+        #self.LogIn.pack(fill=tk.BOTH, expand=True)
 
         self.root.bind("<Configure>", self.refresh)
 
@@ -132,6 +132,15 @@ class Window:
                 self.visitedWindows.push("artist")
             else:
                 self.visitedWindows.delete()
+        elif newWindow == "login":
+            currentWindow.pack_forget()
+            del currentWindow
+            self.LogInWindow = LogInWindow(self.root, self)
+            self.LogInWindow.pack(fill=tk.BOTH, expand=True)
+            if addToQueue:
+                self.visitedWindows.push("login")
+            else:
+                self.visitedWindows.delete()
         else:
             print("Error: no new window with name:", newWindow, "to change to")
 
@@ -154,7 +163,7 @@ class MainWindow(tk.Frame):
         self.logo = Label(self.header, text="LOGO")
         self.logo.pack(padx=15, pady=15, side=tk.LEFT)
 
-        self.login = Button(self.header, bg=blackPlayer, fg=textBrightHigh, activebackground=blackPlayer, activeforeground=textBrightHigh, font=fontMainBoldSmall, text="Log In")
+        self.login = Button(self.header, bg=blackPlayer, fg=textBrightHigh, activebackground=blackPlayer, activeforeground=textBrightHigh, font=fontMainBoldSmall, text="Log In", command=self.logIn)
         self.login.pack(padx=15, pady=15, side=tk.RIGHT)
 
     def initSearch(self):
@@ -272,6 +281,9 @@ class MainWindow(tk.Frame):
         else:
             self.play = True
             self.pause.config(text="⏸")
+
+    def logIn(self):
+        self.window.changeWindow(currentWindow=self, newWindow="login", addToQueue=True)
 
 class ArtistWindow(tk.Frame):
     def __init__(self, parent, artistID, window):
@@ -418,9 +430,15 @@ class AlbumWindow(tk.Frame):
     def back(self):
         self.window.changeWindow(currentWindow=self, newWindow=self.window.getPreviousWindowName(), addToQueue=False)
 
-class LogIn(tk.Frame):
+class LogInWindow(tk.Frame):
     def __init__(self, parent, window):
+        self.window = window
         tk.Frame.__init__(self, parent, bg=blackBackground)
+
+        self.backContainer = Frame(self, bg=blackBackground)
+        self.backContainer.pack(side=tk.TOP, fill=tk.X)
+        self.backButton = Button(self.backContainer, text="← Back", bg=blackPlayer, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh, font=fontMainBoldSmall, command=self.back)
+        self.backButton.pack(side=tk.LEFT, padx=15, pady=15)
 
         self.box = Frame(self, bg=blackPlayer)
         self.box.pack(anchor=tk.CENTER, padx=25, pady=25)
@@ -441,6 +459,15 @@ class LogIn(tk.Frame):
         self.passwdTitle.pack(side=tk.LEFT, padx=2)
         self.passwdEntry = Entry(self.passwdContainer, show="*", width=75)
         self.passwdEntry.pack(fill=tk.X, padx=2, pady=5)
+
+        self.submit = Button(self.box, text="Submit", bg=blackPlayer, fg=textBrightHigh, activebackground=blackPlayer, activeforeground=textBrightHigh, font=fontMainBoldSmall, command=self.submit)
+        self.submit.pack(side=tk.BOTTOM)
+
+    def submit(self):
+        print(self.emailEntry.get(), self.passwdEntry.get())
+
+    def back(self):
+        self.window.changeWindow(currentWindow=self, newWindow=self.window.getPreviousWindowName(), addToQueue=False)
 
 class SearchResultItem(tk.Frame):
     def __init__(self, parent, window, owningWidget, songID, artistID, albumID, albumCover):
@@ -554,7 +581,7 @@ class AlbumCard(tk.Frame):
         self.albumRating = Stars(self)
         self.albumRating.pack()
 
-        self.albumName = Label(self, text=str(albumID), bg=blackPlayer, fg=textBrightHigh, font=fontMainBold)
+        self.albumName = Button(self, text=str(albumID), font=fontMainBoldSmall, bg=blackBackground, fg=textBrightMed, activebackground=blackPlayer, activeforeground=textBrightHigh)
         self.albumName.pack(fill=tk.X, pady=(5, 0))
 
         self.topSongsContainer = Frame(self, bg=blackPlayer)
