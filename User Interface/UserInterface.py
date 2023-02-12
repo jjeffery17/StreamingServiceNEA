@@ -1,15 +1,20 @@
+import random
 import tkinter as tk
 from tkinter import *
 from tkinter import ttk
 from PIL import Image, ImageTk
 from time import sleep
 
+#--- set variables ---
+
+userID = 0
+
 #set album cover placeholders
 albumCoverPlaceholder = Image.open("AlbumCoverPlaceholder.png")
-albumCoverPlaceholderMassive = albumCoverPlaceholder.resize((350, 350), Image.ANTIALIAS)
-albumCoverPlaceholderLarge = albumCoverPlaceholder.resize((125, 125), Image.ANTIALIAS)
-albumCoverPlaceholderMed = albumCoverPlaceholder.resize((75, 75), Image.ANTIALIAS)
-albumCoverPlaceholderSmall = albumCoverPlaceholder.resize((50, 50), Image.ANTIALIAS)
+albumCoverPlaceholderMassive = albumCoverPlaceholder.resize((350, 350), Image.Resampling.LANCZOS)
+albumCoverPlaceholderLarge = albumCoverPlaceholder.resize((125, 125), Image.Resampling.LANCZOS)
+albumCoverPlaceholderMed = albumCoverPlaceholder.resize((75, 75), Image.Resampling.LANCZOS)
+albumCoverPlaceholderSmall = albumCoverPlaceholder.resize((50, 50), Image.Resampling.LANCZOS)
 
 #set appearance variables
 blackSearch = "#0a0a0a"
@@ -29,6 +34,8 @@ fontHidden = ("Arial", "1")
 #set playtime variables
 currentPlaytime = "0:00"
 totalPlaytime = "0:00"
+
+#--- define functions ---
 
 def listToString(list):
     string = ""
@@ -55,6 +62,8 @@ def invertColour(colour):
     b = int(colour[5:7], 16)
     r, g, b = 255-r, 255-g, 255-b #invert values
     return "#"+str(hex(r))[2:].zfill(2)+str(hex(g))[2:].zfill(2)+str(hex(b))[2:].zfill(2) #format and output
+
+#--- define classes ---
 
 class Stack:
     def __init__(self, sizeLimit=-1):
@@ -85,7 +94,7 @@ class Window:
         self.root.geometry("1280x720") #default screen size
 
         self.visitedWindows = Stack()
-        self.visitedWindows.push("main")
+        self.visitedWindows.push(["main", 0])
 
         self.MainWindow = MainWindow(self.root, self)
         self.MainWindow.pack(fill=tk.BOTH, expand=True)
@@ -101,7 +110,7 @@ class Window:
         if e.widget == self.root:
             sleep(0.001) #lower refresh rate to decrease delay when moving window
 
-    def getPreviousWindowName(self):
+    def getPreviousWindow(self):
         return self.visitedWindows.viewPrevious()
 
     def changeWindow(self, currentWindow, newWindow="main", artistID=0, albumID=0, addToQueue=True):
@@ -111,7 +120,7 @@ class Window:
             self.MainWindow = MainWindow(self.root, self)
             self.MainWindow.pack(fill=tk.BOTH, expand=True)
             if addToQueue:
-                self.visitedWindows.push("main")
+                self.visitedWindows.push(["main", 0])
             else:
                 self.visitedWindows.delete()
         elif newWindow == "album":
@@ -120,7 +129,7 @@ class Window:
             self.albumWindow = AlbumWindow(self.root, albumID, self)
             self.albumWindow.pack(fill=tk.BOTH, expand=True)
             if addToQueue:
-                self.visitedWindows.push("album")
+                self.visitedWindows.push(["album", albumID])
             else:
                 self.visitedWindows.delete()
         elif newWindow == "artist":
@@ -129,7 +138,7 @@ class Window:
             self.artistWindow = ArtistWindow(self.root, artistID, self)
             self.artistWindow.pack(fill=tk.BOTH, expand=True)
             if addToQueue:
-                self.visitedWindows.push("artist")
+                self.visitedWindows.push(["artist", artistID])
             else:
                 self.visitedWindows.delete()
         elif newWindow == "login":
@@ -138,7 +147,7 @@ class Window:
             self.LogInWindow = LogInWindow(self.root, self)
             self.LogInWindow.pack(fill=tk.BOTH, expand=True)
             if addToQueue:
-                self.visitedWindows.push("login")
+                self.visitedWindows.push(["login"])
             else:
                 self.visitedWindows.delete()
         else:
@@ -147,6 +156,7 @@ class Window:
 class MainWindow(tk.Frame):
     def __init__(self, parent, window):
         tk.Frame.__init__(self, parent, bg=blackBackground)
+        self.parent = parent
         self.window = window
         self.initUI()
         self.play = False
@@ -163,7 +173,14 @@ class MainWindow(tk.Frame):
         self.logo = Label(self.header, text="LOGO")
         self.logo.pack(padx=15, pady=15, side=tk.LEFT)
 
-        self.login = Button(self.header, bg=blackPlayer, fg=textBrightHigh, activebackground=blackPlayer, activeforeground=textBrightHigh, font=fontMainBoldSmall, text="Log In", command=self.logIn)
+        if userID == 0:
+            self.login = Button(self.header, bg=blackPlayer, fg=textBrightHigh, activebackground=blackPlayer,
+                                activeforeground=textBrightHigh, font=fontMainBoldSmall, text="Log In",
+                                command=self.logIn)
+        else:
+            self.login = Button(self.header, bg=blackPlayer, fg=textBrightHigh, activebackground=blackPlayer,
+                                activeforeground=textBrightHigh, font=fontMainBoldSmall, text="User: "+str(userID)+" (switch)",
+                                command=self.logIn)
         self.login.pack(padx=15, pady=15, side=tk.RIGHT)
 
     def initSearch(self):
@@ -266,13 +283,18 @@ class MainWindow(tk.Frame):
     def updateRecommendations(self):
         self.recommendationsHolder = Frame(self, bg=blackBackground)
         self.recommendationsHolder.pack(fill=tk.BOTH, padx=15, pady=15)
-
         albumCoverMed = ImageTk.PhotoImage(albumCoverPlaceholderMed)
-        self.recommendationCards = []
-        cardsPerRow = 3 #TODO: auto resize to screen size, make scrollable
+        self.recommendationRowList = []
         for i in range(6):
-            self.card = RecommendationCard(self.recommendationsHolder, window=self.window, owningWidget=self, songID=i, artistID=i, albumID=i, albumCover=albumCoverMed)
-            self.card.grid(row=i // cardsPerRow, column=i % cardsPerRow, padx=5, pady=5)
+            if i % 2 == 0:
+                self.recommendationRow = Frame(self.recommendationsHolder, bg=blackBackground)
+                self.recommendationRowList.append(self.recommendationRow)
+                self.recommendationRowList[-1].pack(fill=tk.BOTH)
+                side = tk.LEFT
+            else:
+                side = tk.RIGHT
+            self.card = RecommendationCard(self.recommendationRow, window=self.window, owningWidget=self, songID=i, artistID=i, albumID=i, albumCover=albumCoverMed)
+            self.card.pack(fill=tk.BOTH, side=side, padx=5, pady=5)
 
     def pausePlay(self):
         if self.play:
@@ -366,7 +388,9 @@ class ArtistWindow(tk.Frame):
         albumContainer.bind("<Configure>", lambda e: albumContainer.configure(scrollregion=albumContainer.bbox("all")))
 
     def back(self):
-        self.window.changeWindow(currentWindow=self, newWindow=self.window.getPreviousWindowName(), addToQueue=False)
+        self.window.changeWindow(currentWindow=self, newWindow=self.window.getPreviousWindow()[0],
+                                 albumID=self.window.getPreviousWindow()[1],
+                                 artistID=self.window.getPreviousWindow()[1], addToQueue=False)
 
 class AlbumWindow(tk.Frame):
     def __init__(self, parent, albumID, window):
@@ -428,7 +452,9 @@ class AlbumWindow(tk.Frame):
         songContainer.bind("<Configure>", lambda e: songContainer.configure(scrollregion=songContainer.bbox("all")))
 
     def back(self):
-        self.window.changeWindow(currentWindow=self, newWindow=self.window.getPreviousWindowName(), addToQueue=False)
+        self.window.changeWindow(currentWindow=self, newWindow=self.window.getPreviousWindow()[0],
+                                 albumID=self.window.getPreviousWindow()[1],
+                                 artistID=self.window.getPreviousWindow()[1], addToQueue=False)
 
 class LogInWindow(tk.Frame):
     def __init__(self, parent, window):
@@ -465,9 +491,13 @@ class LogInWindow(tk.Frame):
 
     def submit(self):
         print(self.emailEntry.get(), self.passwdEntry.get())
+        global userID
+        userID = random.randint(1, 1024)
 
     def back(self):
-        self.window.changeWindow(currentWindow=self, newWindow=self.window.getPreviousWindowName(), addToQueue=False)
+        self.window.changeWindow(currentWindow=self, newWindow=self.window.getPreviousWindow()[0],
+                                 albumID=self.window.getPreviousWindow()[1],
+                                 artistID=self.window.getPreviousWindow()[1], addToQueue=False)
 
 class SearchResultItem(tk.Frame):
     def __init__(self, parent, window, owningWidget, songID, artistID, albumID, albumCover):
@@ -596,5 +626,6 @@ class AlbumCard(tk.Frame):
         self.spacer = Frame(self, width=0, height=0, bg=blackPlayer)
         self.spacer.pack(pady=3)
 
+#--- run window ---
 
-UserWindow = Window()
+Window()
