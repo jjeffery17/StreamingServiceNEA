@@ -7,7 +7,44 @@ from time import sleep
 
 #--- set variables ---
 
-userID = 0
+class preferences:
+    def __init__(self, fileName):
+        self.fileName = fileName
+        preferencesFile = open(fileName, "r")
+        self.preferences = []
+        for line in preferencesFile:
+            line = line.split("=")
+            for elem in line:
+                line[line.index(elem)] = elem.strip()
+            self.preferences.append(line)
+        preferencesFile.close()
+
+    def getPreference(self, preferenceName=""):
+        for preference in self.preferences:
+            if preference[0] == preferenceName:
+                return preference[1]
+
+    def setPreference(self, preferenceName="", preferenceSet=""):
+        for preference in self.preferences:
+            if preference[0] == preferenceName:
+                preference[1] = preferenceSet
+        self.updatePreferencesFile()
+
+    def updatePreferencesFile(self):
+        preferencesFile = open(self.fileName, "w")
+        formattedPreferences = ""
+        for line in self.preferences:
+            formattedPreferences += line[0]
+            formattedPreferences += " = "
+            formattedPreferences += line[1]
+            formattedPreferences += "\n"
+        preferencesFile.write(formattedPreferences)
+        preferencesFile.close()
+
+
+preferencesClass = preferences("../preferences.set")
+
+userID = preferencesClass.getPreference("userID")
 
 #set album cover placeholders
 albumCoverPlaceholder = Image.open("AlbumCoverPlaceholder.png")
@@ -63,7 +100,7 @@ def invertColour(colour):
     r, g, b = 255-r, 255-g, 255-b #invert values
     return "#"+str(hex(r))[2:].zfill(2)+str(hex(g))[2:].zfill(2)+str(hex(b))[2:].zfill(2) #format and output
 
-#--- define classes ---
+#--- define Non-UI classes ---
 
 class Stack:
     def __init__(self, sizeLimit=-1):
@@ -85,6 +122,7 @@ class Stack:
     def delete(self):
         del self.stack[-1]
 
+#--- define UI classes ---
 class Window:
     def __init__(self):
         self.root = tk.Tk()
@@ -94,13 +132,18 @@ class Window:
         self.root.geometry("1280x720") #default screen size
 
         self.visitedWindows = Stack()
-        self.visitedWindows.push(["main", 0])
 
-        self.MainWindow = MainWindow(self.root, self)
-        self.MainWindow.pack(fill=tk.BOTH, expand=True)
-
-        #self.LogIn = LogIn(self.root, self)
-        #self.LogIn.pack(fill=tk.BOTH, expand=True)
+        if preferencesClass.getPreference("firstLaunch") == "True":
+            #self.FirstLaunchWindow = FirstLaunchWindow(self.root, self)
+            #self.FirstLaunchWindow.pack(fill=tk.BOTH, expand=True)
+            preferencesClass.setPreference("firstLaunch", "False")
+            self.MainWindow = MainWindow(self.root, self)
+            self.MainWindow.pack(fill=tk.BOTH, expand=True)
+            self.visitedWindows.push(["main", 0])
+        else:
+            self.MainWindow = MainWindow(self.root, self)
+            self.MainWindow.pack(fill=tk.BOTH, expand=True)
+            self.visitedWindows.push(["main", 0])
 
         self.root.bind("<Configure>", self.refresh)
 
@@ -152,6 +195,13 @@ class Window:
                 self.visitedWindows.delete()
         else:
             print("Error: no new window with name:", newWindow, "to change to")
+
+class FirstLaunchWindow(tk.Frame):
+    def __init__(self, parent, window):
+        tk.Frame.__init__(self, parent, bg=blackBackground)
+        self.parent = parent
+        self.window = window
+        window.changeWindow(currentWindow=self, newWindow="main", addToQueue=True)
 
 class MainWindow(tk.Frame):
     def __init__(self, parent, window):
