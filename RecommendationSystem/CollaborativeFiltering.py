@@ -88,6 +88,8 @@ def testCosSimEfficiency():
 
 #testCosSimEfficiency()
 
-model = collaborativeFiltering(size=(1000, 1000))
-testUserID = 1
-print("- partners for user", testUserID, ":", model.findUserRecommendations(testUserID))
+def getRecommendationsByUser(userID):
+    model = collaborativeFiltering(size=(1000, 1000))
+    recommendations = model.findUserRecommendations(userID)
+    print("- partners for user", userID, ":", recommendations)
+    return recommendations

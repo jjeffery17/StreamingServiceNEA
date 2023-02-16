@@ -7,7 +7,7 @@ from time import sleep
 
 #--- set variables ---
 
-class preferences:
+class Preferences:
     def __init__(self, fileName):
         self.fileName = fileName
         preferencesFile = open(fileName, "r")
@@ -42,12 +42,12 @@ class preferences:
         preferencesFile.close()
 
 
-preferencesClass = preferences("../preferences.set")
+preferencesClass = Preferences("preferences.set")
 
 userID = preferencesClass.getPreference("userID")
 
 #set album cover placeholders
-albumCoverPlaceholder = Image.open("AlbumCoverPlaceholder.png")
+albumCoverPlaceholder = Image.open("UserInterface/AlbumCoverPlaceholder.png")
 albumCoverPlaceholderMassive = albumCoverPlaceholder.resize((350, 350), Image.Resampling.LANCZOS)
 albumCoverPlaceholderLarge = albumCoverPlaceholder.resize((125, 125), Image.Resampling.LANCZOS)
 albumCoverPlaceholderMed = albumCoverPlaceholder.resize((75, 75), Image.Resampling.LANCZOS)
@@ -134,16 +134,11 @@ class Window:
         self.visitedWindows = Stack()
 
         if preferencesClass.getPreference("firstLaunch") == "True":
-            #self.FirstLaunchWindow = FirstLaunchWindow(self.root, self)
-            #self.FirstLaunchWindow.pack(fill=tk.BOTH, expand=True)
             preferencesClass.setPreference("firstLaunch", "False")
-            self.MainWindow = MainWindow(self.root, self)
-            self.MainWindow.pack(fill=tk.BOTH, expand=True)
-            self.visitedWindows.push(["main", 0])
-        else:
-            self.MainWindow = MainWindow(self.root, self)
-            self.MainWindow.pack(fill=tk.BOTH, expand=True)
-            self.visitedWindows.push(["main", 0])
+
+        self.MainWindow = MainWindow(self.root, self)
+        self.MainWindow.pack(fill=tk.BOTH, expand=True)
+        self.visitedWindows.push(["main", 0])
 
         self.root.bind("<Configure>", self.refresh)
 
@@ -196,16 +191,11 @@ class Window:
         else:
             print("Error: no new window with name:", newWindow, "to change to")
 
-class FirstLaunchWindow(tk.Frame):
-    def __init__(self, parent, window):
-        tk.Frame.__init__(self, parent, bg=blackBackground)
-        self.parent = parent
-        self.window = window
-        window.changeWindow(currentWindow=self, newWindow="main", addToQueue=True)
-
 class MainWindow(tk.Frame):
     def __init__(self, parent, window):
         tk.Frame.__init__(self, parent, bg=blackBackground)
+        style = ttk.Style()
+        style.theme_use("clam")
         self.parent = parent
         self.window = window
         self.initUI()
@@ -269,7 +259,13 @@ class MainWindow(tk.Frame):
 
     def initViewport(self):
         self.initPlayer()
-        self.updateRecommendations()
+
+        #generate random recommendations for testing
+        recommendations = []
+        for i in range(14):
+            recommendations.append(random.randint(1, 1000))
+
+        self.updateRecommendations(recommendations)
 
     def initPlayer(self):
         self.player = Frame(self, bg=blackPlayer)
@@ -330,21 +326,39 @@ class MainWindow(tk.Frame):
     def updatePlaytimeStream(self, key): #key must be present as bind() passes through the keybind to the function
         print(float(self.playtimer.get()) / 10)
 
-    def updateRecommendations(self):
-        self.recommendationsHolder = Frame(self, bg=blackBackground)
-        self.recommendationsHolder.pack(fill=tk.BOTH, padx=15, pady=15)
-        albumCoverMed = ImageTk.PhotoImage(albumCoverPlaceholderMed)
-        self.recommendationRowList = []
-        for i in range(6):
-            if i % 2 == 0:
-                self.recommendationRow = Frame(self.recommendationsHolder, bg=blackBackground)
-                self.recommendationRowList.append(self.recommendationRow)
-                self.recommendationRowList[-1].pack(fill=tk.BOTH)
-                side = tk.LEFT
-            else:
-                side = tk.RIGHT
-            self.card = RecommendationCard(self.recommendationRow, window=self.window, owningWidget=self, songID=i, artistID=i, albumID=i, albumCover=albumCoverMed)
-            self.card.pack(fill=tk.BOTH, side=side, padx=5, pady=5)
+    def updateRecommendations(self, songIDs):
+        container = Frame(self, bg=blackBackground)
+        container.pack(fill=tk.BOTH, padx=10, pady=10)
+        container.columnconfigure(0, weight=1)
+        songContainer = Canvas(container, bg=blackBackground, height=690)
+        songContainer.pack(side=tk.RIGHT, fill=tk.X, expand=True)
+
+        songWidgetContainer = Frame(songContainer, bg=blackBackground)
+        songContainer.create_window((0, 0), window=songWidgetContainer, anchor="n")
+
+        albumCoverSmall = ImageTk.PhotoImage(albumCoverPlaceholderSmall)
+        songWidgetList = []
+
+        songsPerRow = 2
+
+        for i in range(len(songIDs)):
+            if i % songsPerRow == 0:
+                songIDsPerRow = []
+                for j in range(songsPerRow):
+                    try:
+                        songIDsPerRow.append(songIDs[i+j])
+                    except IndexError:
+                        pass
+                songWidgetList.append(RecommendationRow(songWidgetContainer, window=self.window, songIDs=songIDsPerRow))
+
+        for i in range(len(songWidgetList)):
+            songWidgetList[i].pack(fill=tk.X, side=tk.TOP)
+
+        recommendationScrollbar = ttk.Scrollbar(container, orient=tk.VERTICAL, command=songContainer.yview)
+        recommendationScrollbar.pack(side=tk.LEFT, fill=tk.Y)
+
+        songContainer.configure(yscrollcommand=recommendationScrollbar.set)
+        songContainer.bind("<Configure>", lambda e: songContainer.configure(scrollregion=songContainer.bbox("all")))
 
     def pausePlay(self):
         if self.play:
@@ -356,6 +370,21 @@ class MainWindow(tk.Frame):
 
     def logIn(self):
         self.window.changeWindow(currentWindow=self, newWindow="login", addToQueue=True)
+
+class RecommendationRow(tk.Frame):
+    def __init__(self, parent, window, songIDs):
+        self.window = window
+        tk.Frame.__init__(self, parent, bg=blackBackground)
+        self.recommendationsHolder = Frame(self, bg=blackBackground)
+        self.recommendationsHolder.pack(fill=tk.BOTH, padx=15, pady=15)
+        albumCoverMed = ImageTk.PhotoImage(albumCoverPlaceholderMed)
+        self.recommendationItemList = []
+
+        for songID in songIDs:
+            self.recommendationItemList.append(RecommendationCard(self.recommendationsHolder, window=self.window, owningWidget=parent, albumCover=albumCoverMed, albumID=songID, artistID=songID, songID=songID))
+
+        for item in self.recommendationItemList:
+            item.pack(side=tk.LEFT, padx=50, pady=25)
 
 class ArtistWindow(tk.Frame):
     def __init__(self, parent, artistID, window):
@@ -678,4 +707,5 @@ class AlbumCard(tk.Frame):
 
 #--- run window ---
 
-Window()
+def runUI():
+    Window()
