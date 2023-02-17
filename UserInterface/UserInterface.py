@@ -124,7 +124,7 @@ class Stack:
 
 #--- define UI classes ---
 class Window:
-    def __init__(self):
+    def __init__(self, recommendations):
         self.root = tk.Tk()
 
         self.root.title("Streaming Service NEA")
@@ -133,10 +133,12 @@ class Window:
 
         self.visitedWindows = Stack()
 
+        self.recommendations = recommendations
+
         if preferencesClass.getPreference("firstLaunch") == "True":
             preferencesClass.setPreference("firstLaunch", "False")
 
-        self.MainWindow = MainWindow(self.root, self)
+        self.MainWindow = MainWindow(self.root, self, recommendations=self.recommendations)
         self.MainWindow.pack(fill=tk.BOTH, expand=True)
         self.visitedWindows.push(["main", 0])
 
@@ -155,7 +157,7 @@ class Window:
         if newWindow == "main":
             currentWindow.pack_forget()
             del currentWindow
-            self.MainWindow = MainWindow(self.root, self)
+            self.MainWindow = MainWindow(self.root, self, recommendations=self.recommendations)
             self.MainWindow.pack(fill=tk.BOTH, expand=True)
             if addToQueue:
                 self.visitedWindows.push(["main", 0])
@@ -192,12 +194,13 @@ class Window:
             print("Error: no new window with name:", newWindow, "to change to")
 
 class MainWindow(tk.Frame):
-    def __init__(self, parent, window):
+    def __init__(self, parent, window, recommendations=[]):
         tk.Frame.__init__(self, parent, bg=blackBackground)
         style = ttk.Style()
         style.theme_use("clam")
         self.parent = parent
         self.window = window
+        self.recommendations = recommendations
         self.initUI()
         self.play = False
 
@@ -259,13 +262,7 @@ class MainWindow(tk.Frame):
 
     def initViewport(self):
         self.initPlayer()
-
-        #generate random recommendations for testing
-        recommendations = []
-        for i in range(14):
-            recommendations.append(random.randint(1, 1000))
-
-        self.updateRecommendations(recommendations)
+        self.updateRecommendations(self.recommendations)
 
     def initPlayer(self):
         self.player = Frame(self, bg=blackPlayer)
@@ -707,5 +704,5 @@ class AlbumCard(tk.Frame):
 
 #--- run window ---
 
-def runUI():
-    Window()
+def runUI(recomendations):
+    UI = Window(recomendations)
