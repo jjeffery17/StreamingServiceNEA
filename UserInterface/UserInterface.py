@@ -41,10 +41,10 @@ class Preferences:
         preferencesFile.write(formattedPreferences)
         preferencesFile.close()
 
-
 preferencesClass = Preferences("preferences.set")
 
 userID = preferencesClass.getPreference("userID")
+print(". user ID:", userID)
 
 #set album cover placeholders
 albumCoverPlaceholder = Image.open("UserInterface/AlbumCoverPlaceholder.png")
@@ -187,7 +187,16 @@ class Window:
             self.LogInWindow = LogInWindow(self.root, self)
             self.LogInWindow.pack(fill=tk.BOTH, expand=True)
             if addToQueue:
-                self.visitedWindows.push(["login"])
+                self.visitedWindows.push(["login", 0])
+            else:
+                self.visitedWindows.delete()
+        elif newWindow == "settings":
+            currentWindow.pack_forget()
+            del currentWindow
+            self.settingsWindow = SettingsWindow(self.root, self)
+            self.settingsWindow.pack(fill=tk.BOTH, expand=True)
+            if addToQueue:
+                self.visitedWindows.push(["settings", 0])
             else:
                 self.visitedWindows.delete()
         else:
@@ -216,14 +225,14 @@ class MainWindow(tk.Frame):
         self.logo = Label(self.header, text="LOGO")
         self.logo.pack(padx=15, pady=15, side=tk.LEFT)
 
-        if userID == 0:
+        if int(userID) == 0:
             self.login = Button(self.header, bg=blackPlayer, fg=textBrightHigh, activebackground=blackPlayer,
                                 activeforeground=textBrightHigh, font=fontMainBoldSmall, text="Log In",
                                 command=self.logIn)
         else:
             self.login = Button(self.header, bg=blackPlayer, fg=textBrightHigh, activebackground=blackPlayer,
                                 activeforeground=textBrightHigh, font=fontMainBoldSmall, text="User: "+str(userID)+" (switch)",
-                                command=self.logIn)
+                                command=self.settings)
         self.login.pack(padx=15, pady=15, side=tk.RIGHT)
 
     def initSearch(self):
@@ -366,7 +375,10 @@ class MainWindow(tk.Frame):
             self.pause.config(text="⏸")
 
     def logIn(self):
-        self.window.changeWindow(currentWindow=self, newWindow="login", addToQueue=True)
+        self.window.changeWindow(currentWindow=self, newWindow="login", albumID=0, artistID=0, addToQueue=True)
+
+    def settings(self):
+        self.window.changeWindow(currentWindow=self, newWindow="settings", albumID=0, artistID=0, addToQueue=True)
 
 class RecommendationRow(tk.Frame):
     def __init__(self, parent, window, songIDs):
@@ -574,6 +586,45 @@ class LogInWindow(tk.Frame):
         self.window.changeWindow(currentWindow=self, newWindow=self.window.getPreviousWindow()[0],
                                  albumID=self.window.getPreviousWindow()[1],
                                  artistID=self.window.getPreviousWindow()[1], addToQueue=False)
+
+class SettingsWindow(tk.Frame):
+    def __init__(self, parent, window):
+        self.window = window
+        tk.Frame.__init__(self, parent, bg=blackBackground)
+
+        self.backContainer = Frame(self, bg=blackBackground)
+        self.backContainer.pack(side=tk.TOP, fill=tk.X)
+        self.backButton = Button(self.backContainer, text="← Back", bg=blackPlayer, fg=textBrightLow,
+                                 activebackground=blackPlayer, activeforeground=textBrightHigh, font=fontMainBoldSmall,
+                                 command=self.back)
+        self.backButton.pack(side=tk.LEFT, padx=15, pady=15)
+
+        self.box = Frame(self, bg=blackPlayer)
+        self.box.pack(fill=tk.BOTH, padx=50, pady=10)
+
+        self.title = Label(self.box, text="Settings", bg=blackPlayer, fg=textBrightHigh, font=fontMainBoldTitle)
+        self.title.pack(fill=tk.X, padx=10, pady=10)
+
+        self.logoutRow = Frame(self.box, bg=blackPlayer, highlightcolor=textBrightLow, highlightthickness=1)
+        self.logoutRow.pack(fill=tk.X, padx=10, pady=10)
+        self.logoutText = Label(self.logoutRow, text="Logout", bg=blackPlayer, fg=textBrightHigh, font=fontMainBold)
+        self.logoutText.pack(side=tk.LEFT, padx=5, pady=5)
+        self.logoutButton = Button(self.logoutRow, text="Logout", bg=blackPlayer, fg=textBrightLow,
+                                   activebackground=blackPlayer, activeforeground=textBrightHigh,
+                                   font=fontMainBoldSmall,
+                                   command=self.logout)
+        self.logoutButton.pack(side=tk.RIGHT, padx=5, pady=5)
+
+    def back(self):
+        self.window.changeWindow(currentWindow=self, newWindow=self.window.getPreviousWindow()[0],
+                                 albumID=self.window.getPreviousWindow()[1],
+                                 artistID=self.window.getPreviousWindow()[1], addToQueue=False)
+
+    def logout(self):
+        print("logout")
+        preferencesClass.setPreference("userID", "0")
+        preferencesClass.updatePreferencesFile()
+        userID = preferencesClass.getPreference("userID")
 
 class SearchResultItem(tk.Frame):
     def __init__(self, parent, window, owningWidget, songID, artistID, albumID, albumCover):
