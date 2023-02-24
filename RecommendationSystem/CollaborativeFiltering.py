@@ -20,15 +20,17 @@ def findClosest(list, value):
     return closest[-1]
 
 class collaborativeFiltering():
-    def __init__(self, size=(100, 100)):
+    def __init__(self, arr):
         #creating example array
         #array = np.zeros((5,10)) #empty array
         print("\n\n--- Creating Collaborative Filtering Array ---")
 
-        print(". creating random array of size:", size)
-        self.array = np.random.uniform(low=-1.0, high=1.0, size=size)
-        print("/ random array created!")
+        #print(". creating random array of size:", size)
+        #self.array = np.random.uniform(low=-1.0, high=1.0, size=size)
+        #print("/ random array created!")
 
+        self.array = arr
+        print("/ array transferred")
 
     def cosineSimilarity(self, a, b, output_degrees=False):
         dot = np.dot(a, b)
@@ -70,7 +72,8 @@ def testModelEfficiency():
         for y in range(4):
             start = time.time()
             size = (10**x, 10**y)
-            model = collaborativeFiltering(size=size)
+            arr = np.random.uniform(low=-1.0, high=1.0, size=size)
+            model = collaborativeFiltering(arr=arr)
             model.findRecommendations()
             end = time.time()
             print("- time to create:", end-start, "s for", size, "items")
@@ -78,8 +81,8 @@ def testModelEfficiency():
 #testModelEfficiency()
 
 def testCosSimEfficiency():
-    model = collaborativeFiltering(size=(1, 1))
-
+    arr = np.random.uniform(low=-1.0, high=1.0, size=(1, 1))
+    model = collaborativeFiltering(arr=arr)
     array = np.random.uniform(low=-1.0, high=1.0, size=(2, 100000000))
     start = time.time()
     model.cosineSimilarity(array[0], array[1])
@@ -89,7 +92,8 @@ def testCosSimEfficiency():
 #testCosSimEfficiency()
 
 def getRecommendationsByUser(userID):
-    model = collaborativeFiltering(size=(1000, 1000))
+    arr = np.load("Data/CF_Matrix.npy")
+    model = collaborativeFiltering(arr=arr)
     recommendations = model.findUserRecommendations(userID)
     print("- partners for user", userID, ":", recommendations)
     return recommendations
