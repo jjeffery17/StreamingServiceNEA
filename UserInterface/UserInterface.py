@@ -355,7 +355,7 @@ class MainWindow(tk.Frame):
                         songIDsPerRow.append(songIDs[i+j])
                     except IndexError:
                         pass
-                songWidgetList.append(RecommendationRow(songWidgetContainer, window=self.window, songIDs=songIDsPerRow))
+                songWidgetList.append(RecommendationRow(songWidgetContainer, owningWidget=self, window=self.window, songIDs=songIDsPerRow))
 
         for i in range(len(songWidgetList)):
             songWidgetList[i].pack(fill=tk.X, side=tk.TOP)
@@ -379,21 +379,6 @@ class MainWindow(tk.Frame):
 
     def settings(self):
         self.window.changeWindow(currentWindow=self, newWindow="settings", albumID=0, artistID=0, addToQueue=True)
-
-class RecommendationRow(tk.Frame):
-    def __init__(self, parent, window, songIDs):
-        self.window = window
-        tk.Frame.__init__(self, parent, bg=blackBackground)
-        self.recommendationsHolder = Frame(self, bg=blackBackground)
-        self.recommendationsHolder.pack(fill=tk.BOTH, padx=15, pady=15)
-        albumCoverMed = ImageTk.PhotoImage(albumCoverPlaceholderMed)
-        self.recommendationItemList = []
-
-        for songID in songIDs:
-            self.recommendationItemList.append(RecommendationCard(self.recommendationsHolder, window=self.window, owningWidget=parent, albumCover=albumCoverMed, albumID=songID, artistID=songID, songID=songID))
-
-        for item in self.recommendationItemList:
-            item.pack(side=tk.LEFT, padx=50, pady=25)
 
 class ArtistWindow(tk.Frame):
     def __init__(self, parent, artistID, window):
@@ -693,6 +678,22 @@ class Stars(tk.Frame):
                             , bg=blackSearch, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh)
         self.star5.grid(row=0, column=4)
 
+class RecommendationRow(tk.Frame):
+    def __init__(self, parent, window, owningWidget, songIDs):
+        self.window = window
+        self.owningWidget = owningWidget
+        tk.Frame.__init__(self, parent, bg=blackBackground)
+        self.recommendationsHolder = Frame(self, bg=blackBackground)
+        self.recommendationsHolder.pack(fill=tk.BOTH, padx=15, pady=15)
+        albumCoverMed = ImageTk.PhotoImage(albumCoverPlaceholderMed)
+        self.recommendationItemList = []
+
+        for songID in songIDs:
+            self.recommendationItemList.append(RecommendationCard(self.recommendationsHolder, window=self.window, owningWidget=owningWidget, albumCover=albumCoverMed, albumID=songID, artistID=songID, songID=songID))
+
+        for item in self.recommendationItemList:
+            item.pack(side=tk.LEFT, padx=50, pady=25)
+
 class RecommendationCard(tk.Frame):
     def __init__(self, parent, window, owningWidget, songID, artistID, albumID, albumCover):
         self.window = window
@@ -722,6 +723,7 @@ class RecommendationCard(tk.Frame):
         self.currentSongStars.grid(row=1, column=0, pady=5)
 
     def openArtist(self):
+        print(self.owningWidget.winfo_parent())
         self.window.changeWindow(currentWindow=self.owningWidget, newWindow="artist", artistID=self.artistID)
 
     def openAlbum(self):
@@ -755,5 +757,5 @@ class AlbumCard(tk.Frame):
 
 #--- run window ---
 
-def runUI(recomendations):
-    UI = Window(recomendations)
+def runUI(recommendations):
+    UI = Window(recommendations)
