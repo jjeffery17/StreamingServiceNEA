@@ -27,11 +27,8 @@ def resetMatrix(users=0, songs=0):
     else:
         print("/ Reset aborted!")
 
-def addUser():
-    pass
-
 def resetBehaviour():
-    response = input("Are you sure you want to reset all values from user interactions to {songs} song(s)? y/n".format(songs=songs))
+    response = input("Are you sure you want to reset all values from user interactions? y/n")
     if response.lower() == "y":
         matrix = np.zeros((0, 5))
         print(matrix)
@@ -76,22 +73,12 @@ def updateBehaviour(songID, rating=None, listened=None, artist=None, album=None)
     else:
         matrix[location][4] = matrix[location][4]
 
+    #update CF_Matrix
+    updateItem(0, songID, matrix[location][1], matrix[location][2], matrix[location][3], matrix[location][4])
+
     matrix = np.array(matrix)
     np.save("Data/UserBehaviour.npy", matrix)
     print("/ updated user behaviour matrix to:", matrix)
-
-def getRecommendations(userID, amountPerType):
-    recommendations = []
-
-    #get recommendations from Collaborative Filtering
-    for recommendation in CF.getRecommendationsByUser(userID):
-        if len(recommendations) >= amountPerType[0]:
-            break
-        recommendations.append(recommendation[1])
-
-    #get recommendations from albums/artists
-
-    return recommendations
 
 def updateItem(userID, songID, rating, listened, artist, album):
     '''
@@ -113,3 +100,18 @@ def updateItem(userID, songID, rating, listened, artist, album):
     matrix = np.load("Data/CF_Matrix.npy")
     matrix[userID][songID] = value
     np.save("Data/CF_Matrix.npy", matrix)
+
+def getRecommendations(userID, amountPerType):
+    recommendations = []
+
+    #get recommendations from Collaborative Filtering
+    for recommendation in CF.getRecommendationsByUser(userID):
+        if len(recommendations) >= amountPerType[0]:
+            break
+        recommendations.append(recommendation[1])
+
+    #get recommendations from AI
+
+    #get recommendations from albums/artists
+
+    return recommendations
