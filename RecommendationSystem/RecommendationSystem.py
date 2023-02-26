@@ -4,6 +4,8 @@ import numpy as np
 from RecommendationSystem import CollaborativeFiltering as CF #import as called from main.py
 import math
 
+ratingWeight = 0.5 #how much does the rating from hte user effect items in the collaborative filtering matrix
+
 def resetMatrix(users=0, songs=0):
     '''
     :param users: amount of users
@@ -25,23 +27,22 @@ def resetMatrix(users=0, songs=0):
     else:
         print("/ Reset aborted!")
 
+def addUser():
+    pass
+
 def resetBehaviour():
-    '''
-    :param users: amount of users
-    :param songs: amount of songs
-    :return:
-    '''
-    response = input(("Are you sure you want to reset all values from user interactions? y/n"))
+    response = input("Are you sure you want to reset all values from user interactions to {songs} song(s)? y/n".format(songs=songs))
     if response.lower() == "y":
-        matrix = np.zeros((3, 5))
+        matrix = np.zeros((0, 5))
         print(matrix)
-        numpy.save("Data/UserBehaviour.npy", matrix)
+        np.save("Data/UserBehaviour.npy", matrix)
     else:
         print("/ Reset aborted!")
 
 def updateBehaviour(songID, rating=None, listened=None, artist=None, album=None):
     matrix = np.load("Data/UserBehaviour.npy")
-    print(matrix)
+    matrix = matrix.tolist()
+    print(". updating user behaviour matrix of songID:", songID)
 
     location = 0
     counter = 0
@@ -52,9 +53,32 @@ def updateBehaviour(songID, rating=None, listened=None, artist=None, album=None)
             counter += 1
 
     if counter == len(matrix): #if song is not in matrix
-        np.append(matrix, np.zeros((1, 5)))
+        matrix.append([songID, 0.0, 0.0, 0.0, 0.0])
+        location = len(matrix)-1
 
-    print(matrix)
+    if rating != None:
+        matrix[location][1] = rating
+    else:
+        matrix[location][1] = matrix[location][1]
+
+    if listened != None:
+        matrix[location][2] = listened
+    else:
+        matrix[location][2] = matrix[location][2]
+
+    if artist != None:
+        matrix[location][3] = artist
+    else:
+        matrix[location][3] = matrix[location][3]
+
+    if album != None:
+        matrix[location][4] = album
+    else:
+        matrix[location][4] = matrix[location][4]
+
+    matrix = np.array(matrix)
+    np.save("Data/UserBehaviour.npy", matrix)
+    print("/ updated user behaviour matrix to:", matrix)
 
 def getRecommendations(userID, amountPerType):
     recommendations = []
@@ -80,7 +104,7 @@ def updateItem(userID, songID, rating, listened, artist, album):
     :return:
     '''
 
-    rating = (rating-3)*0.5
+    rating = (rating-3)*ratingWeight
     listened = 2*(math.tanh(listened))-1
     artist = math.log(artist+1) #natural log
     album = math.tanh(album)

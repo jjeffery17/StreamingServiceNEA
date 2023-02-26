@@ -1,17 +1,6 @@
 import numpy as np
 import time
 
-"""
-output code key:
-
----    start new function
-.      start new process (time consuming)
-/      process complete
--      information
-!      warning
-?      query
-"""
-
 def findClosest(list, value):
     closest = [list[0]]
     for item in list:

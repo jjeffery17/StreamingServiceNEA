@@ -4,6 +4,10 @@ from tkinter import *
 from tkinter import ttk
 from PIL import Image, ImageTk
 from time import sleep
+from RecommendationSystem import RecommendationSystem as rs
+
+import RecommendationSystem.RecommendationSystem
+
 
 #--- set variables ---
 
@@ -319,7 +323,7 @@ class MainWindow(tk.Frame):
         self.artistName.grid(row=1, column=0, padx=10, pady=5)
         self.albumName = Label(self.playerInfoRight, text="AlbumName", font=fontMainBold, bg=blackPlayer, fg=textBrightLow)
         self.albumName.grid(row=0, column=0, padx=8, pady=10)
-        self.currentSongStars = Stars(self.playerInfoRight)
+        self.currentSongStars = Stars(self.playerInfoRight, 0) #TODO: add current song playing rating functionality
         self.currentSongStars.grid(row=1, column=0, padx=10, pady=5)
 
         self.updatePlaytimeUI("1:10", "3:30")
@@ -415,7 +419,7 @@ class ArtistWindow(tk.Frame):
         self.name = Label(self.artistContainer, text=self.artistName, font=fontMainBoldTitle, bg=self.artistColour, fg=self.artistHighlight)
         self.name.grid(row=0, column=0)
 
-        self.artistRating = Stars(self.artistContainer)
+        self.artistRating = Stars(self.artistContainer, 0) #TODO: add artist rating functionality
         self.artistRating.grid(row=1, column=0, pady=(10, 2), sticky=tk.E)
 
         self.artistRatingAvg = Label(self.artistContainer, text="Average rating: "+str(3)+" stars", font=fontMainBoldSmall, bg=self.artistColour, fg=self.artistHighlight)
@@ -496,7 +500,7 @@ class AlbumWindow(tk.Frame):
         self.albumCover.grid(row=0, column=0, padx=25, pady=25)
         self.name = Label(self.albumContainer, text=self.albumName, font=fontMainBoldTitle, bg=self.albumColour, fg=self.albumHighlight)
         self.name.grid(row=1, column=0)
-        self.albumRating = Stars(self.albumContainer)
+        self.albumRating = Stars(self.albumContainer, 0) #TODO: add album rating functionality
         self.albumRating.grid(row=2, column=0, pady=(10, 2))
         self.albumRatingAvg = Label(self.albumContainer, text="Average rating: " + str(3) + " stars", font=fontMainBoldSmall, bg=self.albumColour, fg=self.albumHighlight)
         self.albumRatingAvg.grid(row=3, column=0)
@@ -636,7 +640,7 @@ class SearchResultItem(tk.Frame):
         self.artistName.grid(row=1, column=0, pady=1)
         self.albumName = Button(self.infoContainerRight, text=str(albumID), font=fontMainBoldSmall, bg=blackSearch, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh, command=self.openAlbum)
         self.albumName.grid(row=0, column=0, sticky="e")
-        self.currentSongStars = Stars(self.infoContainerRight)
+        self.currentSongStars = Stars(self.infoContainerRight, songID)
         self.currentSongStars.grid(row=1, column=0)
 
     def openArtist(self):
@@ -646,12 +650,17 @@ class SearchResultItem(tk.Frame):
         self.window.changeWindow(currentWindow=self.owningWidget, newWindow="album", albumID=self.albumID)
 
 class Stars(tk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, songID):
         tk.Frame.__init__(self, parent)
+        self.songID = songID
         self.starsArr = ["★", "★", "★", "☆", "☆"]
         self.updateButtons()
 
     def updateStars(self, starCount):
+        #update Data
+        rs.updateBehaviour(self.songID, rating=starCount)
+
+        #update UI
         self.starsArr = ["☆", "☆", "☆", "☆", "☆"]
         for i in range(starCount):
             self.starsArr[i] = "★"
@@ -719,7 +728,7 @@ class RecommendationCard(tk.Frame):
         self.artistName.grid(row=1, column=0, pady=5)
         self.albumName = Button(self.infoContainerRight, text=str(albumID), font=fontMainBoldSmall, bg=blackBackground, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh, command=self.openAlbum)
         self.albumName.grid(row=0, column=0, pady=5, sticky="e")
-        self.currentSongStars = Stars(self.infoContainerRight)
+        self.currentSongStars = Stars(self.infoContainerRight, songID)
         self.currentSongStars.grid(row=1, column=0, pady=5)
 
     def openArtist(self):
@@ -737,7 +746,7 @@ class AlbumCard(tk.Frame):
         self.albumCover.image = albumCover
         self.albumCover.pack(side=tk.TOP, padx=10, pady=10)
 
-        self.albumRating = Stars(self)
+        self.albumRating = Stars(self, 0) #TODO: add album rating functionality
         self.albumRating.pack()
 
         self.albumName = Button(self, text=str(albumID), font=fontMainBoldSmall, bg=blackBackground, fg=textBrightMed, activebackground=blackPlayer, activeforeground=textBrightHigh)
