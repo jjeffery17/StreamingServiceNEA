@@ -5,6 +5,7 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 from time import sleep
 from RecommendationSystem import RecommendationSystem as rs
+from StreamingSystem import StreamingSystem as st
 
 #--- set variables ---
 
@@ -323,7 +324,7 @@ class MainWindow(tk.Frame):
         self.currentSongStars = Stars(self.playerInfoRight, 0) #TODO: add current song playing rating functionality
         self.currentSongStars.grid(row=1, column=0, padx=10, pady=5)
 
-        self.updatePlaytimeUI("1:10", "3:30")
+        self.updatePlaytimeUI("0:00", "3:30")
 
     def updatePlaytimeUI(self, currentPlaytime, totalPlaytime):
         self.playtimer.set((playtimeToSeconds(currentPlaytime)/playtimeToSeconds(totalPlaytime))*1000)
@@ -374,6 +375,7 @@ class MainWindow(tk.Frame):
         else:
             self.play = True
             self.pause.config(text="⏸")
+            st.play(1)
 
     def logIn(self):
         self.window.changeWindow(currentWindow=self, newWindow="login", albumID=0, artistID=0, addToQueue=True)

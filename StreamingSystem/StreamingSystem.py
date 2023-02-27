@@ -1,9 +1,8 @@
 import pydub.playback
 from pydub import *
 
-pydub.AudioSegment.ffmpeg = "C:/ffmpeg"
-pydub.AudioSegment.converter = "C:/ffmpeg"
-
+currentSongID = 1
+currentSongFile = AudioSegment.from_wav(file="SampleAudio/wav/"+str(currentSongID)+".wav")
 
 def timeToMs(mins, secs):
     return (mins*60*1000)+(secs*1000)
@@ -13,7 +12,18 @@ def msToTime(ms):
     secs = secs % 60
     return mins, secs
 
+def play(songID):
+    global currentSongID
+    global currentSongFile
+    if songID == currentSongID:
+        pydub.playback.play(currentSongFile)
+    else:
+        currentSongID = songID
+        currentSongFile = AudioSegment.from_wav(file="SampleAudio/wav/" + str(currentSongID) + ".wav")
+        pydub.playback.play(currentSongFile)
 
+
+'''
 #get audio file
 id = 1
 song = AudioSegment.from_wav(file="../SampleAudio/wav/"+str(id)+".wav")
@@ -47,3 +57,4 @@ pydub.playback.play(testQueue)
 #queue and play chunk
 
 #delete played chunk
+'''
