@@ -6,9 +6,6 @@ from PIL import Image, ImageTk
 from time import sleep
 from RecommendationSystem import RecommendationSystem as rs
 
-import RecommendationSystem.RecommendationSystem
-
-
 #--- set variables ---
 
 class Preferences:
@@ -594,14 +591,22 @@ class SettingsWindow(tk.Frame):
         self.title = Label(self.box, text="Settings", bg=blackPlayer, fg=textBrightHigh, font=fontMainBoldTitle)
         self.title.pack(fill=tk.X, padx=10, pady=10)
 
+        self.resetRow = Frame(self.box, bg=blackPlayer, highlightcolor=textBrightLow, highlightthickness=1)
+        self.resetRow.pack(fill=tk.X, padx=10, pady=10)
+        self.resetText = Label(self.resetRow, text="Reset all recommendation data?", bg=blackPlayer, fg=textBrightHigh, font=fontMainBold)
+        self.resetText.pack(side=tk.LEFT, padx=5, pady=5)
+        self.resetButton = Button(self.resetRow, text="Reset?", bg=blackPlayer, fg=textBrightLow,
+                                   activebackground=blackPlayer, activeforeground=textBrightHigh,
+                                   font=fontMainBoldSmall, command=self.reset)
+        self.resetButton.pack(side=tk.RIGHT, padx=5, pady=5)
+
         self.logoutRow = Frame(self.box, bg=blackPlayer, highlightcolor=textBrightLow, highlightthickness=1)
         self.logoutRow.pack(fill=tk.X, padx=10, pady=10)
         self.logoutText = Label(self.logoutRow, text="Logout", bg=blackPlayer, fg=textBrightHigh, font=fontMainBold)
         self.logoutText.pack(side=tk.LEFT, padx=5, pady=5)
         self.logoutButton = Button(self.logoutRow, text="Logout", bg=blackPlayer, fg=textBrightLow,
                                    activebackground=blackPlayer, activeforeground=textBrightHigh,
-                                   font=fontMainBoldSmall,
-                                   command=self.logout)
+                                   font=fontMainBoldSmall, command=self.logout)
         self.logoutButton.pack(side=tk.RIGHT, padx=5, pady=5)
 
     def back(self):
@@ -610,10 +615,12 @@ class SettingsWindow(tk.Frame):
                                  artistID=self.window.getPreviousWindow()[1], addToQueue=False)
 
     def logout(self):
-        print("logout")
         preferencesClass.setPreference("userID", "0")
         preferencesClass.updatePreferencesFile()
         userID = preferencesClass.getPreference("userID")
+
+    def reset(self):
+        rs.resetBehaviour()
 
 class SearchResultItem(tk.Frame):
     def __init__(self, parent, window, owningWidget, songID, artistID, albumID, albumCover):
@@ -658,7 +665,7 @@ class Stars(tk.Frame):
 
     def updateStars(self, starCount):
         #update Data
-        rs.updateBehaviour(self.songID, rating=starCount)
+        rs.updateBehaviour(userID, self.songID, rating=starCount)
 
         #update UI
         self.starsArr = ["☆", "☆", "☆", "☆", "☆"]
