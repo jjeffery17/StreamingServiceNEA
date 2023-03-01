@@ -6,6 +6,7 @@ from PIL import Image, ImageTk
 from time import sleep
 from RecommendationSystem import RecommendationSystem as rs
 from StreamingSystem import StreamingSystem as st
+import multiprocessing
 
 #--- set variables ---
 
@@ -375,7 +376,7 @@ class MainWindow(tk.Frame):
         else:
             self.play = True
             self.pause.config(text="⏸")
-            st.play(1)
+            play(1)
 
     def logIn(self):
         self.window.changeWindow(currentWindow=self, newWindow="login", albumID=0, artistID=0, addToQueue=True)
@@ -773,7 +774,15 @@ class AlbumCard(tk.Frame):
         self.spacer = Frame(self, width=0, height=0, bg=blackPlayer)
         self.spacer.pack(pady=3)
 
-#--- run window ---
+#--- define functions ---
+def play(songID, time="0:00"):
+    print(". playing song:", songID)
+    if __name__ == "UserInterface.UserInterface":
+        print("true")
+        audioProcess = multiprocessing.Process(target=st.play, args=[songID])
+        audioProcess.start()
+    else:
+        print("false")
 
 def runUI(recommendations):
     UI = Window(recommendations)
