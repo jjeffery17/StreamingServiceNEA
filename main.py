@@ -1,5 +1,7 @@
 from UserInterface import UserInterface as ui
 from RecommendationSystem import RecommendationSystem as rs
+from StreamingSystem import StreamingSystem as st
+import threading
 
 """
 output code key:
@@ -15,4 +17,8 @@ output code key:
 recommendations = rs.getRecommendations(1, [10, 10, 5])
 print("- final recommendations:", recommendations)
 
-ui.runUI(recommendations)
+if __name__ == "__main__":
+    p1 = threading.Thread(target=ui.runUI, args=[recommendations])
+    p2 = threading.Thread(target=st.checkPlayLoop)
+    p1.start()
+    p2.start()

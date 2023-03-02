@@ -1,3 +1,4 @@
+import os
 import random
 import tkinter as tk
 from tkinter import *
@@ -5,15 +6,13 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 from time import sleep
 from RecommendationSystem import RecommendationSystem as rs
-from StreamingSystem import StreamingSystem as st
-import multiprocessing
 
 #--- set variables ---
 
 class Preferences:
     def __init__(self, fileName):
         self.fileName = fileName
-        preferencesFile = open(fileName, "r")
+        preferencesFile = open(self.fileName, "r")
         self.preferences = []
         for line in preferencesFile:
             line = line.split("=")
@@ -23,17 +22,20 @@ class Preferences:
         preferencesFile.close()
 
     def getPreference(self, preferenceName=""):
+        self.updatePreferencesVar()
         for preference in self.preferences:
             if preference[0] == preferenceName:
                 return preference[1]
 
     def setPreference(self, preferenceName="", preferenceSet=""):
+        self.updatePreferencesVar()
         for preference in self.preferences:
             if preference[0] == preferenceName:
                 preference[1] = preferenceSet
         self.updatePreferencesFile()
 
     def updatePreferencesFile(self):
+        self.updatePreferencesVar()
         preferencesFile = open(self.fileName, "w")
         formattedPreferences = ""
         for line in self.preferences:
@@ -42,6 +44,16 @@ class Preferences:
             formattedPreferences += line[1]
             formattedPreferences += "\n"
         preferencesFile.write(formattedPreferences)
+        preferencesFile.close()
+
+    def updatePreferencesVar(self):
+        preferencesFile = open(self.fileName, "r")
+        self.preferences = []
+        for line in preferencesFile:
+            line = line.split("=")
+            for elem in line:
+                line[line.index(elem)] = elem.strip()
+            self.preferences.append(line)
         preferencesFile.close()
 
 preferencesClass = Preferences("preferences.set")
@@ -103,6 +115,8 @@ def invertColour(colour):
     r, g, b = 255-r, 255-g, 255-b #invert values
     return "#"+str(hex(r))[2:].zfill(2)+str(hex(g))[2:].zfill(2)+str(hex(b))[2:].zfill(2) #format and output
 
+onClose = None
+
 #--- define Non-UI classes ---
 
 class Stack:
@@ -148,7 +162,6 @@ class Window:
         self.root.bind("<Configure>", self.refresh)
 
         self.root.mainloop()
-
     def refresh(self, e):
         if e.widget == self.root:
             sleep(0.001) #lower refresh rate to decrease delay when moving window
@@ -370,13 +383,16 @@ class MainWindow(tk.Frame):
         songContainer.bind("<Configure>", lambda e: songContainer.configure(scrollregion=songContainer.bbox("all")))
 
     def pausePlay(self):
-        if self.play:
+        if self.play: #pause
             self.play = False
             self.pause.config(text="⏵")
-        else:
+            preferencesClass.setPreference("currentPlaytime", "0:00")
+            preferencesClass.setPreference("isPlaying", "False")
+        else: #play
             self.play = True
             self.pause.config(text="⏸")
-            play(1)
+            preferencesClass.setPreference("currentPlaytime", "0:00")
+            preferencesClass.setPreference("isPlaying", "True")
 
     def logIn(self):
         self.window.changeWindow(currentWindow=self, newWindow="login", albumID=0, artistID=0, addToQueue=True)
@@ -775,14 +791,6 @@ class AlbumCard(tk.Frame):
         self.spacer.pack(pady=3)
 
 #--- define functions ---
-def play(songID, time="0:00"):
-    print(". playing song:", songID)
-    if __name__ == "UserInterface.UserInterface":
-        print("true")
-        audioProcess = multiprocessing.Process(target=st.play, args=[songID])
-        audioProcess.start()
-    else:
-        print("false")
 
 def runUI(recommendations):
     UI = Window(recommendations)

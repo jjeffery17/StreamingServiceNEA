@@ -1,2 +1,4 @@
 firstLaunch = False
 userID = 0
+currentPlaytime = 0:00
+isPlaying = False
