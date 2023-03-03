@@ -1,5 +1,5 @@
-import os
 import random
+import threading
 import tkinter as tk
 from tkinter import *
 from tkinter import ttk
@@ -12,14 +12,7 @@ from RecommendationSystem import RecommendationSystem as rs
 class Preferences:
     def __init__(self, fileName):
         self.fileName = fileName
-        preferencesFile = open(self.fileName, "r")
-        self.preferences = []
-        for line in preferencesFile:
-            line = line.split("=")
-            for elem in line:
-                line[line.index(elem)] = elem.strip()
-            self.preferences.append(line)
-        preferencesFile.close()
+        self.updatePreferencesVar()
 
     def getPreference(self, preferenceName=""):
         self.updatePreferencesVar()
@@ -35,29 +28,33 @@ class Preferences:
         self.updatePreferencesFile()
 
     def updatePreferencesFile(self):
-        self.updatePreferencesVar()
-        preferencesFile = open(self.fileName, "w")
-        formattedPreferences = ""
-        for line in self.preferences:
-            formattedPreferences += line[0]
-            formattedPreferences += " = "
-            formattedPreferences += line[1]
-            formattedPreferences += "\n"
-        preferencesFile.write(formattedPreferences)
-        preferencesFile.close()
+        self.lock = threading.Lock()
+        self.lock.acquire()
+        with open(self.fileName, "w") as preferencesFile:
+            formattedPreferences = ""
+            for line in self.preferences:
+                formattedPreferences += line[0]
+                formattedPreferences += " = "
+                formattedPreferences += line[1]
+                formattedPreferences += "\n"
+            preferencesFile.write(formattedPreferences)
+        self.lock.release()
 
     def updatePreferencesVar(self):
-        preferencesFile = open(self.fileName, "r")
-        self.preferences = []
-        for line in preferencesFile:
-            line = line.split("=")
-            for elem in line:
-                line[line.index(elem)] = elem.strip()
-            self.preferences.append(line)
-        preferencesFile.close()
+        self.lock = threading.Lock()
+        self.lock.acquire()
+        with open(self.fileName, "r") as preferencesFile:
+            self.preferences = []
+            for line in preferencesFile:
+                line = line.split("=")
+                for elem in line:
+                    line[line.index(elem)] = elem.strip()
+                self.preferences.append(line)
+        self.lock.release()
 
 preferencesClass = Preferences("preferences.set")
 
+preferencesClass.setPreference("isPlaying", "False")
 userID = preferencesClass.getPreference("userID")
 print(". user ID:", userID)
 
@@ -383,16 +380,19 @@ class MainWindow(tk.Frame):
         songContainer.bind("<Configure>", lambda e: songContainer.configure(scrollregion=songContainer.bbox("all")))
 
     def pausePlay(self):
+        print("Pause Play")
         if self.play: #pause
             self.play = False
             self.pause.config(text="⏵")
             preferencesClass.setPreference("currentPlaytime", "0:00")
             preferencesClass.setPreference("isPlaying", "False")
+            print("isPlaying set to:", preferencesClass.getPreference("isPlaying"))
         else: #play
             self.play = True
             self.pause.config(text="⏸")
             preferencesClass.setPreference("currentPlaytime", "0:00")
             preferencesClass.setPreference("isPlaying", "True")
+            print("isPlaying set to:", preferencesClass.getPreference("isPlaying"))
 
     def logIn(self):
         self.window.changeWindow(currentWindow=self, newWindow="login", albumID=0, artistID=0, addToQueue=True)

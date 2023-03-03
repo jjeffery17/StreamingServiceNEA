@@ -1,23 +1,18 @@
 import pydub.playback
 from pydub import *
 import time
+import threading
+import multiprocessing
 
-currentSongID = 1
-currentSongFile = AudioSegment.from_wav(file="SampleAudio/wav/"+str(currentSongID)+".wav")
+currentSongFile = AudioSegment.from_wav(file="SampleAudio/wav/"+str(1)+".wav")
 
 class Preferences:
     def __init__(self, fileName):
         self.fileName = fileName
-        preferencesFile = open(self.fileName, "r")
-        self.preferences = []
-        for line in preferencesFile:
-            line = line.split("=")
-            for elem in line:
-                line[line.index(elem)] = elem.strip()
-            self.preferences.append(line)
-        preferencesFile.close()
+        self.updatePreferencesVar()
 
     def getPreference(self, preferenceName=""):
+        self.updatePreferencesVar()
         for preference in self.preferences:
             if preference[0] == preferenceName:
                 return preference[1]
@@ -30,30 +25,34 @@ class Preferences:
         self.updatePreferencesFile()
 
     def updatePreferencesFile(self):
-        self.updatePreferencesVar()
-        preferencesFile = open(self.fileName, "w")
-        formattedPreferences = ""
-        for line in self.preferences:
-            formattedPreferences += line[0]
-            formattedPreferences += " = "
-            formattedPreferences += line[1]
-            formattedPreferences += "\n"
-        preferencesFile.write(formattedPreferences)
-        preferencesFile.close()
+        self.lock = threading.Lock()
+        self.lock.acquire()
+        with open(self.fileName, "w") as preferencesFile:
+            formattedPreferences = ""
+            for line in self.preferences:
+                formattedPreferences += line[0]
+                formattedPreferences += " = "
+                formattedPreferences += line[1]
+                formattedPreferences += "\n"
+            preferencesFile.write(formattedPreferences)
+        self.lock.release()
 
     def updatePreferencesVar(self):
-        preferencesFile = open(self.fileName, "r")
-        self.preferences = []
-        for line in preferencesFile:
-            line = line.split("=")
-            for elem in line:
-                line[line.index(elem)] = elem.strip()
-            self.preferences.append(line)
-        preferencesFile.close()
+        self.lock = threading.Lock()
+        self.lock.acquire()
+        with open(self.fileName, "r") as preferencesFile:
+            self.preferences = []
+            for line in preferencesFile:
+                line = line.split("=")
+                for elem in line:
+                    line[line.index(elem)] = elem.strip()
+                self.preferences.append(line)
+        self.lock.release()
 
 preferencesClass = Preferences("preferences.set")
 
 isPlaying = False
+previouslyPlaying = False
 
 def timeToMs(mins, secs):
     return (mins*60*1000)+(secs*1000)
@@ -64,23 +63,29 @@ def msToTime(ms):
     return mins, secs
 
 def play(songID):
-    global currentSongID
     global currentSongFile
-    if songID == currentSongID:
-        pydub.playback.play(currentSongFile)
-    else:
-        currentSongID = songID
-        currentSongFile = AudioSegment.from_wav(file="SampleAudio/wav/" + str(currentSongID) + ".wav")
-        pydub.playback.play(currentSongFile)
+    currentSongFile = AudioSegment.from_wav(file="SampleAudio/wav/"+str(songID)+".wav")
+    pydub.playback.play(currentSongFile)
 
 def checkPlayLoop():
+    global previouslyPlaying
+    global isPlaying
     while True:
         time.sleep(0.5)
+        previouslyPlaying = isPlaying
+        proc = multiprocessing.Process(target=play, args=[int(preferencesClass.getPreference("currentSongID"))])
         if preferencesClass.getPreference("isPlaying") == "True":
             isPlaying = True
+            if previouslyPlaying == False:
+                proc = multiprocessing.Process(target=play, args=[int(preferencesClass.getPreference("currentSongID"))])
+                proc.start()
         else:
             isPlaying = False
-        print(preferencesClass.getPreference("isPlaying"), isPlaying)
+            try:
+                proc.kill()
+            except AttributeError:
+                pass
+        print(previouslyPlaying, isPlaying)
 
 '''
 #get audio file

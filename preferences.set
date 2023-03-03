@@ -1,4 +1,5 @@
 firstLaunch = False
 userID = 0
+currentSongID = 1
 currentPlaytime = 0:00
 isPlaying = False
