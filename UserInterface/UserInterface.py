@@ -1,5 +1,6 @@
 import random
 import threading
+import pygame
 import tkinter as tk
 from tkinter import *
 from tkinter import ttk
@@ -92,18 +93,24 @@ def listToString(list):
         string += letter
     return string
 
-def playtimeToSeconds(playtime):
-    playtime = list(playtime)
+def timecodeToSeconds(timecode):
+    timecode = list(timecode)
     splitterIndex = 0
 
-    for i in range(len(playtime)):
-        if playtime[i] == ":":
+    for i in range(len(timecode)):
+        if timecode[i] == ":":
             splitterIndex = i
 
-    minutes = int(listToString(playtime[:splitterIndex]))
-    seconds = int(listToString(playtime[splitterIndex+1:]))
+    minutes = int(listToString(timecode[:splitterIndex]))
+    seconds = int(listToString(timecode[splitterIndex + 1:]))
 
     return (minutes*60)+seconds
+
+def secondsToTimecode(seconds):
+    seconds = int(seconds)
+    mins = seconds // 60
+    seconds = seconds % 60
+    return str(mins)+":"+format(seconds, "02d")
 
 def invertColour(colour):
     r = int(colour[1:3], 16) #get rgb values as integers
@@ -335,15 +342,18 @@ class MainWindow(tk.Frame):
         self.currentSongStars = Stars(self.playerInfoRight, 0) #TODO: add current song playing rating functionality
         self.currentSongStars.grid(row=1, column=0, padx=10, pady=5)
 
-        self.updatePlaytimeUI("0:00", "3:30")
+        self.updatePlaytimeUI(preferencesClass.getPreference("currentPlaytime"), secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/Ancient-music.mp3").get_length()))
 
     def updatePlaytimeUI(self, currentPlaytime, totalPlaytime):
-        self.playtimer.set((playtimeToSeconds(currentPlaytime)/playtimeToSeconds(totalPlaytime))*1000)
+        self.playtimer.set((timecodeToSeconds(currentPlaytime) / timecodeToSeconds(totalPlaytime)) * 1000)
         self.currentPlaytime["text"] = currentPlaytime
         self.totalPlaytime["text"] = totalPlaytime
 
     def updatePlaytimeStream(self, key): #key must be present as bind() passes through the keybind to the function
-        print(float(self.playtimer.get()) / 10)
+        preferencesClass.setPreference("currentPlaytime", secondsToTimecode(float(self.playtimer.get() / 1000)*pygame.mixer.Sound("SampleAudio/mp3/Ancient-music.mp3").get_length()))
+        self.updatePlaytimeUI(preferencesClass.getPreference("currentPlaytime"), secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/Ancient-music.mp3").get_length()))
+        if self.play:
+            self.pausePlay(override=True)
 
     def updateRecommendations(self, songIDs):
         container = Frame(self, bg=blackBackground)
@@ -379,20 +389,34 @@ class MainWindow(tk.Frame):
         songContainer.configure(yscrollcommand=recommendationScrollbar.set)
         songContainer.bind("<Configure>", lambda e: songContainer.configure(scrollregion=songContainer.bbox("all")))
 
-    def pausePlay(self):
-        print("Pause Play")
+    def pausePlay(self, override=False):
+        if override:
+            self.play = False
+            self.pause.config(text="⏵")
+            preferencesClass.setPreference("currentPlaytime", secondsToTimecode(timecodeToSeconds(
+                preferencesClass.getPreference("currentPlaytime")) + pygame.mixer.music.get_pos() / 1000))
+            self.updatePlaytimeUI(preferencesClass.getPreference("currentPlaytime"), secondsToTimecode(
+                pygame.mixer.Sound("SampleAudio/mp3/Ancient-music.mp3").get_length()))
+            preferencesClass.setPreference("isPlaying", "False")
+            self.play = True
+            self.pause.config(text="⏸")
+            print("current time", secondsToTimecode(timecodeToSeconds(
+                preferencesClass.getPreference("currentPlaytime")) + pygame.mixer.music.get_pos() / 1000))
+            self.updatePlaytimeUI(preferencesClass.getPreference("currentPlaytime"), secondsToTimecode(
+                pygame.mixer.Sound("SampleAudio/mp3/Ancient-music.mp3").get_length()))
+            preferencesClass.setPreference("isPlaying", "True")
         if self.play: #pause
             self.play = False
             self.pause.config(text="⏵")
-            preferencesClass.setPreference("currentPlaytime", "1:00")
+            preferencesClass.setPreference("currentPlaytime", secondsToTimecode(timecodeToSeconds(preferencesClass.getPreference("currentPlaytime"))+pygame.mixer.music.get_pos()/1000))
+            self.updatePlaytimeUI(preferencesClass.getPreference("currentPlaytime"), secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/Ancient-music.mp3").get_length()))
             preferencesClass.setPreference("isPlaying", "False")
-            print("isPlaying set to:", preferencesClass.getPreference("isPlaying"))
         else: #play
             self.play = True
             self.pause.config(text="⏸")
-            preferencesClass.setPreference("currentPlaytime", "1:00")
+            print("current time", secondsToTimecode(timecodeToSeconds(preferencesClass.getPreference("currentPlaytime"))+pygame.mixer.music.get_pos()/1000))
+            self.updatePlaytimeUI(preferencesClass.getPreference("currentPlaytime"), secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/Ancient-music.mp3").get_length()))
             preferencesClass.setPreference("isPlaying", "True")
-            print("isPlaying set to:", preferencesClass.getPreference("isPlaying"))
 
     def logIn(self):
         self.window.changeWindow(currentWindow=self, newWindow="login", albumID=0, artistID=0, addToQueue=True)

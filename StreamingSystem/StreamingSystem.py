@@ -1,10 +1,6 @@
-import pydub.playback
-from pydub import *
 import time
 import threading
 import pygame
-
-currentSongFile = AudioSegment.from_wav(file="SampleAudio/wav/"+str(1)+".wav")
 
 class Preferences:
     def __init__(self, fileName):
@@ -62,42 +58,14 @@ def msToTime(ms):
     secs = secs % 60
     return mins, secs
 
-'''
-def playAudio(currentSongFile, playEvent):
-    playbackObject = pydub.playback.play(currentSongFile)
-    while not playEvent.is_set():
-        continue
-    playbackObject.stop()
-
-def stopAudio(playEvent):
-    playEvent.set()
-
-def playPause(play=True, songID=0, time="0:00"): #TODO: implement playing from specified time
-    global currentSongFile
-    currentSongFile = AudioSegment.from_wav(file="SampleAudio/wav/"+str(songID)+".wav")
-    audioThread = None
-    playEvent = threading.Event()
-    if audioThread == None:
-        audioThread = threading.Thread(target=playAudio, args=[currentSongFile, playEvent])
-        audioThread.start()
-    if not play:
-        playEvent.set()
-        audioThread.join()
-    else:
-        playEvent.clear()
-'''
-
 def timecodeToS(timecode="0:00"):
     timecode = timecode.split(":")
     seconds = (int(timecode[0])*60)+int(timecode[1])
     return seconds
 
-pygame.init()
-
-def playAudio(time="0:00"):
+def playAudio(timecode="0:00"):
     pygame.mixer.music.load("SampleAudio/mp3/Ancient-music.mp3")
-    print(timecodeToS(time))
-    pygame.mixer.music.play(start=timecodeToS(time))
+    pygame.mixer.music.play(start=timecodeToS(timecode))
 
 def stopAudio():
     pygame.mixer.music.stop()
@@ -112,14 +80,12 @@ def checkPlayLoop():
         if preferencesClass.getPreference("isPlaying") == "True":
             isPlaying = True
             if previouslyPlaying == False:
-                print(preferencesClass.getPreference("currentPlaytime"))
+                print("playing from playtime", preferencesClass.getPreference("currentPlaytime"))
                 playAudio(preferencesClass.getPreference("currentPlaytime"))
-                #playPause(play=True, songID=int(preferencesClass.getPreference("currentSongID")))
         else:
             isPlaying = False
             if previouslyPlaying == True:
                 stopAudio()
-                #playPause(play=False, songID=int(preferencesClass.getPreference("currentSongID")))
 
 
 '''
