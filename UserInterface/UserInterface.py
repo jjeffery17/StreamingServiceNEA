@@ -384,13 +384,13 @@ class MainWindow(tk.Frame):
         if self.play: #pause
             self.play = False
             self.pause.config(text="⏵")
-            preferencesClass.setPreference("currentPlaytime", "0:00")
+            preferencesClass.setPreference("currentPlaytime", "1:00")
             preferencesClass.setPreference("isPlaying", "False")
             print("isPlaying set to:", preferencesClass.getPreference("isPlaying"))
         else: #play
             self.play = True
             self.pause.config(text="⏸")
-            preferencesClass.setPreference("currentPlaytime", "0:00")
+            preferencesClass.setPreference("currentPlaytime", "1:00")
             preferencesClass.setPreference("isPlaying", "True")
             print("isPlaying set to:", preferencesClass.getPreference("isPlaying"))
 
