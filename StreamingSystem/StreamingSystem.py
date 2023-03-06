@@ -45,10 +45,7 @@ class Preferences:
                 self.preferences.append(line)
         self.lock.release()
 
-preferencesClass = Preferences("preferences.set")
-
-isPlaying = False
-previouslyPlaying = False
+preferencesObj = Preferences("preferences.set")
 
 def timeToMs(mins, secs):
     return (mins*60*1000)+(secs*1000)
@@ -63,30 +60,33 @@ def timecodeToS(timecode="0:00"):
     seconds = (int(timecode[0])*60)+int(timecode[1])
     return seconds
 
-def playAudio(timecode="0:00"):
-    pygame.mixer.music.load("SampleAudio/mp3/Ancient-music.mp3")
-    pygame.mixer.music.play(start=timecodeToS(timecode))
+class audioPlayer():
+    def __init__(self):
+        self.isPlaying = False
+        self.previouslyPlaying = False
 
-def stopAudio():
-    pygame.mixer.music.stop()
+    def playAudio(self, timecode="0:00"):
+        pygame.mixer.music.load("SampleAudio/mp3/Ancient-music.mp3")
+        pygame.mixer.music.play(start=timecodeToS(timecode))
 
-def checkPlayLoop():
-    global previouslyPlaying
-    global isPlaying
-    while True:
-        time.sleep(0.5)
-        previouslyPlaying = isPlaying
-        proc = None
-        if preferencesClass.getPreference("isPlaying") == "True":
-            isPlaying = True
-            if previouslyPlaying == False:
-                print("playing from playtime", preferencesClass.getPreference("currentPlaytime"))
-                playAudio(preferencesClass.getPreference("currentPlaytime"))
-        else:
-            isPlaying = False
-            if previouslyPlaying == True:
-                stopAudio()
+    def stopAudio(self):
+        pygame.mixer.music.stop()
 
+    def checkPlayLoop(self):
+        while True:
+            time.sleep(0.5)
+            previouslyPlaying = self.isPlaying
+            if preferencesObj.getPreference("isPlaying") == "True":
+                self.isPlaying = True
+                if previouslyPlaying == False:
+                    print("playing from playtime", preferencesObj.getPreference("currentPlaytime"))
+                    self.playAudio(preferencesObj.getPreference("currentPlaytime"))
+            else:
+                self.isPlaying = False
+                if previouslyPlaying == True:
+                    self.stopAudio()
+
+audioPlayerObj = audioPlayer()
 
 '''
 #get audio file
