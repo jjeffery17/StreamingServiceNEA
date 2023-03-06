@@ -25,3 +25,4 @@ if __name__ == "__main__":
     p2 = threading.Thread(target=st.checkPlayLoop)
     p1.start()
     p2.start()
+#test
