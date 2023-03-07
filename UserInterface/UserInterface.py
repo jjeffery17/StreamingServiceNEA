@@ -815,7 +815,24 @@ class AlbumCard(tk.Frame):
         self.spacer = Frame(self, width=0, height=0, bg=blackPlayer)
         self.spacer.pack(pady=3)
 
-#--- define functions ---
+#--- run UI ---
 
-def runUI(recommendations):
-    UI = Window(recommendations)
+class UIClass:
+    def __init__(self, recommendations):
+        self.p1 = threading.Thread(target=self.runUI, args=[recommendations])
+        self.p2 = threading.Thread(target=self.updateUI)
+        self.p1.start()
+        self.p2.start()
+
+    def runUI(self, recommendations):
+        self.UI_Ref = Window(recommendations)
+
+    def updateUI(self):
+        while True:
+            sleep(1)
+            try:
+                print("currentPlaytime", secondsToTimecode(timecodeToSeconds(preferencesObj.getPreference("currentPlaytime")) + pygame.mixer.music.get_pos() / 1000))
+                currentPlaytime = secondsToTimecode(timecodeToSeconds(preferencesObj.getPreference("currentPlaytime")) + pygame.mixer.music.get_pos() / 1000)
+                self.UI_Ref.MainWindow.updatePlaytimeUI(currentPlaytime, secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/Ancient-music.mp3").get_length()))
+            except AttributeError:
+                pass
