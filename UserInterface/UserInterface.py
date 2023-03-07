@@ -163,6 +163,8 @@ class Window:
         self.MainWindow.pack(fill=tk.BOTH, expand=True)
         self.visitedWindows.push(["main", 0])
 
+        UIClass.sharedWindowObj = self
+
         self.root.bind("<Configure>", self.refresh)
 
         self.root.mainloop()
@@ -818,11 +820,13 @@ class AlbumCard(tk.Frame):
 #--- run UI ---
 
 class UIClass:
+    sharedWindowObj = None #storing a reference to the Window() class to allow access from different threads
     def __init__(self, recommendations):
-        self.p1 = threading.Thread(target=self.runUI, args=[recommendations])
-        self.p2 = threading.Thread(target=self.updateUI)
-        self.p1.start()
-        self.p2.start()
+
+        p1 = threading.Thread(target=self.runUI, args=[recommendations])
+        p2 = threading.Thread(target=self.updateUI)
+        p1.start()
+        p2.start()
 
     def runUI(self, recommendations):
         self.UI_Ref = Window(recommendations)
@@ -831,8 +835,8 @@ class UIClass:
         while True:
             sleep(1)
             try:
-                print("currentPlaytime", secondsToTimecode(timecodeToSeconds(preferencesObj.getPreference("currentPlaytime")) + pygame.mixer.music.get_pos() / 1000))
-                currentPlaytime = secondsToTimecode(timecodeToSeconds(preferencesObj.getPreference("currentPlaytime")) + pygame.mixer.music.get_pos() / 1000)
-                self.UI_Ref.MainWindow.updatePlaytimeUI(currentPlaytime, secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/Ancient-music.mp3").get_length()))
+                #print(preferencesObj.getPreference("currentPlaytime"))
+                currentPlaytime = secondsToTimecode(timecodeToSeconds(preferencesObj.getPreference("currentPlaytime")) + (pygame.mixer.music.get_pos() / 1000) + 1)
+                self.sharedWindowObj.MainWindow.updatePlaytimeUI(currentPlaytime, secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/Ancient-music.mp3").get_length()))
             except AttributeError:
-                pass
+                print("nah")
