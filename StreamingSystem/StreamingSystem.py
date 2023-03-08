@@ -66,7 +66,7 @@ class audioPlayer():
         self.previouslyPlaying = False
 
     def playAudio(self, timecode="0:00"):
-        pygame.mixer.music.load("SampleAudio/mp3/Ancient-music.mp3")
+        pygame.mixer.music.load("SampleAudio/mp3/{ID}.mp3".format(ID=int(preferencesObj.getPreference("currentSongID"))))
         #proc = threading.Thread(target=pygame.mixer.music.play, kwargs={"start": timecodeToS(timecode)})
         #proc.priority = 10
         #proc.start()

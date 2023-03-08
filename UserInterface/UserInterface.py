@@ -336,16 +336,16 @@ class MainWindow(tk.Frame):
         self.totalPlaytime = Label(self.playtimeInfoContainer, text="0:00", font=fontMainNorm, bg=blackPlayer, fg=textBrightMed)
         self.totalPlaytime.pack(side=tk.RIGHT, padx=5, pady=(0, 10))
 
-        self.songName = Label(self.playerInfoLeft, text="SongName", font=fontMainBold, bg=blackPlayer, fg=textBrightHigh)
+        self.songName = Label(self.playerInfoLeft, text="Song "+preferencesObj.getPreference("currentSongID"), font=fontMainBold, bg=blackPlayer, fg=textBrightHigh) #TODO: connect to db
         self.songName.grid(row=0, column=0, padx=8, pady=10)
-        self.artistName = Label(self.playerInfoLeft, text="ArtistName", font=fontMainBold, bg=blackPlayer, fg=textBrightMed)
+        self.artistName = Label(self.playerInfoLeft, text="Artist "+preferencesObj.getPreference("currentSongID"), font=fontMainBold, bg=blackPlayer, fg=textBrightMed) #TODO: connect to db
         self.artistName.grid(row=1, column=0, padx=10, pady=5)
-        self.albumName = Label(self.playerInfoRight, text="AlbumName", font=fontMainBold, bg=blackPlayer, fg=textBrightLow)
+        self.albumName = Label(self.playerInfoRight, text="Album "+preferencesObj.getPreference("currentSongID"), font=fontMainBold, bg=blackPlayer, fg=textBrightLow) #TODO: connect to db
         self.albumName.grid(row=0, column=0, padx=8, pady=10)
-        self.currentSongStars = Stars(self.playerInfoRight, 0) #TODO: add current song playing rating functionality
+        self.currentSongStars = Stars(self.playerInfoRight, int(preferencesObj.getPreference("currentSongID")))
         self.currentSongStars.grid(row=1, column=0, padx=10, pady=5)
 
-        self.updatePlaytimeUI(preferencesObj.getPreference("currentPlaytime"), secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/Ancient-music.mp3").get_length()))
+        self.updatePlaytimeUI(preferencesObj.getPreference("currentPlaytime"), secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/{ID}.mp3".format(ID=int(preferencesObj.getPreference("currentSongID")))).get_length()))
 
     def updatePlaytimeUI(self, currentPlaytime, totalPlaytime):
         self.playtimer.set((timecodeToSeconds(currentPlaytime) / timecodeToSeconds(totalPlaytime)) * 1000)
@@ -353,8 +353,8 @@ class MainWindow(tk.Frame):
         self.totalPlaytime["text"] = totalPlaytime
 
     def updatePlaytimeStream(self, key): #key must be present as bind() passes through the keybind to the function
-        preferencesObj.setPreference("currentPlaytime", secondsToTimecode(float(self.playtimer.get() / 1000) * pygame.mixer.Sound("SampleAudio/mp3/Ancient-music.mp3").get_length()))
-        self.updatePlaytimeUI(preferencesObj.getPreference("currentPlaytime"), secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/Ancient-music.mp3").get_length()))
+        preferencesObj.setPreference("currentPlaytime", secondsToTimecode(float(self.playtimer.get() / 1000) * pygame.mixer.Sound("SampleAudio/mp3/{ID}.mp3".format(ID=int(preferencesObj.getPreference("currentSongID")))).get_length()))
+        self.updatePlaytimeUI(preferencesObj.getPreference("currentPlaytime"), secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/{ID}.mp3".format(ID=int(preferencesObj.getPreference("currentSongID")))).get_length()))
         if self.play:
             self.pausePlay(override=True)
 
@@ -399,26 +399,26 @@ class MainWindow(tk.Frame):
             preferencesObj.setPreference("currentPlaytime", secondsToTimecode(timecodeToSeconds(
                 preferencesObj.getPreference("currentPlaytime")) + pygame.mixer.music.get_pos() / 1000))
             self.updatePlaytimeUI(preferencesObj.getPreference("currentPlaytime"), secondsToTimecode(
-                pygame.mixer.Sound("SampleAudio/mp3/Ancient-music.mp3").get_length()))
+                pygame.mixer.Sound("SampleAudio/mp3/{ID}.mp3".format(ID=int(preferencesObj.getPreference("currentSongID")))).get_length()))
             preferencesObj.setPreference("isPlaying", "False")
             self.play = True
             self.pause.config(text="⏸")
             print("current time", secondsToTimecode(timecodeToSeconds(
                 preferencesObj.getPreference("currentPlaytime")) + pygame.mixer.music.get_pos() / 1000))
             self.updatePlaytimeUI(preferencesObj.getPreference("currentPlaytime"), secondsToTimecode(
-                pygame.mixer.Sound("SampleAudio/mp3/Ancient-music.mp3").get_length()))
+                pygame.mixer.Sound("SampleAudio/mp3/{ID}.mp3".format(ID=int(preferencesObj.getPreference("currentSongID")))).get_length()))
             preferencesObj.setPreference("isPlaying", "True")
         if self.play: #pause
             self.play = False
             self.pause.config(text="⏵")
             preferencesObj.setPreference("currentPlaytime", secondsToTimecode(timecodeToSeconds(preferencesObj.getPreference("currentPlaytime")) + pygame.mixer.music.get_pos() / 1000))
-            self.updatePlaytimeUI(preferencesObj.getPreference("currentPlaytime"), secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/Ancient-music.mp3").get_length()))
+            self.updatePlaytimeUI(preferencesObj.getPreference("currentPlaytime"), secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/{ID}.mp3".format(ID=int(preferencesObj.getPreference("currentSongID")))).get_length()))
             preferencesObj.setPreference("isPlaying", "False")
         else: #play
             self.play = True
             self.pause.config(text="⏸")
             print("current time", secondsToTimecode(timecodeToSeconds(preferencesObj.getPreference("currentPlaytime")) + pygame.mixer.music.get_pos() / 1000))
-            self.updatePlaytimeUI(preferencesObj.getPreference("currentPlaytime"), secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/Ancient-music.mp3").get_length()))
+            self.updatePlaytimeUI(preferencesObj.getPreference("currentPlaytime"), secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/{ID}.mp3".format(ID=int(preferencesObj.getPreference("currentSongID")))).get_length()))
             preferencesObj.setPreference("isPlaying", "True")
 
     def logIn(self):
@@ -427,7 +427,7 @@ class MainWindow(tk.Frame):
     def settings(self):
         self.window.changeWindow(currentWindow=self, newWindow="settings", albumID=0, artistID=0, addToQueue=True)
 
-class ArtistWindow(tk.Frame):
+class ArtistWindow(tk.Frame): #TODO: connect to db
     def __init__(self, parent, artistID, window):
         self.window = window
         tk.Frame.__init__(self, parent, bg=blackBackground)
@@ -443,7 +443,7 @@ class ArtistWindow(tk.Frame):
         style.theme_use("clam")
 
         emptyList = []
-        for i in range(26):
+        for i in range(24): #TODO: connect to db
             emptyList.append(0)
         self.initMain(emptyList)
 
@@ -462,7 +462,7 @@ class ArtistWindow(tk.Frame):
         self.name = Label(self.artistContainer, text=self.artistName, font=fontMainBoldTitle, bg=self.artistColour, fg=self.artistHighlight)
         self.name.grid(row=0, column=0)
 
-        self.artistRating = Stars(self.artistContainer, 0) #TODO: add artist rating functionality
+        self.artistRating = Stars(self.artistContainer, int(preferencesObj.getPreference("currentSongID"))) #TODO: add artist rating functionality
         self.artistRating.grid(row=1, column=0, pady=(10, 2), sticky=tk.E)
 
         self.artistRatingAvg = Label(self.artistContainer, text="Average rating: "+str(3)+" stars", font=fontMainBoldSmall, bg=self.artistColour, fg=self.artistHighlight)
@@ -487,7 +487,7 @@ class ArtistWindow(tk.Frame):
     def initMain(self, artistAlbumID):
         container = Frame(self, bg=blackBackground)
         container.pack(fill=tk.BOTH, padx=10, pady=10)
-        albumContainer = Canvas(container, bg=blackBackground, height=570)
+        albumContainer = Canvas(container, bg=blackBackground, height=560)
         albumContainer.pack(fill=tk.BOTH)
 
         albumWidgetContainer = Frame(albumContainer, bg=blackBackground)
@@ -512,7 +512,7 @@ class ArtistWindow(tk.Frame):
                                  albumID=self.window.getPreviousWindow()[1],
                                  artistID=self.window.getPreviousWindow()[1], addToQueue=False)
 
-class AlbumWindow(tk.Frame):
+class AlbumWindow(tk.Frame): #TODO: connect to db
     def __init__(self, parent, albumID, window):
         self.window = window
         tk.Frame.__init__(self, parent, bg=blackBackground)
@@ -543,7 +543,7 @@ class AlbumWindow(tk.Frame):
         self.albumCover.grid(row=0, column=0, padx=25, pady=25)
         self.name = Label(self.albumContainer, text=self.albumName, font=fontMainBoldTitle, bg=self.albumColour, fg=self.albumHighlight)
         self.name.grid(row=1, column=0)
-        self.albumRating = Stars(self.albumContainer, 0) #TODO: add album rating functionality
+        self.albumRating = Stars(self.albumContainer, int(preferencesObj.getPreference("currentSongID"))) #TODO: add album rating functionality
         self.albumRating.grid(row=2, column=0, pady=(10, 2))
         self.albumRatingAvg = Label(self.albumContainer, text="Average rating: " + str(3) + " stars", font=fontMainBoldSmall, bg=self.albumColour, fg=self.albumHighlight)
         self.albumRatingAvg.grid(row=3, column=0)
@@ -576,7 +576,7 @@ class AlbumWindow(tk.Frame):
                                  albumID=self.window.getPreviousWindow()[1],
                                  artistID=self.window.getPreviousWindow()[1], addToQueue=False)
 
-class LogInWindow(tk.Frame):
+class LogInWindow(tk.Frame): #TODO: connect to db + encrypt
     def __init__(self, parent, window):
         self.window = window
         tk.Frame.__init__(self, parent, bg=blackBackground)
@@ -619,7 +619,7 @@ class LogInWindow(tk.Frame):
                                  albumID=self.window.getPreviousWindow()[1],
                                  artistID=self.window.getPreviousWindow()[1], addToQueue=False)
 
-class SettingsWindow(tk.Frame):
+class SettingsWindow(tk.Frame): #TODO: connect to db (+ encrypt)
     def __init__(self, parent, window):
         self.window = window
         tk.Frame.__init__(self, parent, bg=blackBackground)
@@ -668,7 +668,7 @@ class SettingsWindow(tk.Frame):
     def reset(self):
         rs.resetBehaviour()
 
-class SearchResultItem(tk.Frame):
+class SearchResultItem(tk.Frame): #TODO: connect to db
     def __init__(self, parent, window, owningWidget, songID, artistID, albumID, albumCover):
         self.window = window
         self.owningWidget = owningWidget
@@ -702,7 +702,7 @@ class SearchResultItem(tk.Frame):
     def openAlbum(self):
         self.window.changeWindow(currentWindow=self.owningWidget, newWindow="album", albumID=self.albumID)
 
-class Stars(tk.Frame):
+class Stars(tk.Frame): #TODO: connect to db
     def __init__(self, parent, songID):
         tk.Frame.__init__(self, parent)
         self.songID = songID
@@ -756,7 +756,7 @@ class RecommendationRow(tk.Frame):
         for item in self.recommendationItemList:
             item.pack(side=tk.LEFT, padx=50, pady=25)
 
-class RecommendationCard(tk.Frame):
+class RecommendationCard(tk.Frame): #TODO: connect to db
     def __init__(self, parent, window, owningWidget, songID, artistID, albumID, albumCover):
         self.window = window
         self.owningWidget = owningWidget
@@ -791,18 +791,18 @@ class RecommendationCard(tk.Frame):
     def openAlbum(self):
         self.window.changeWindow(currentWindow=self.owningWidget, newWindow="album", albumID=self.albumID)
 
-class AlbumCard(tk.Frame):
-    def __init__(self, parent, artistID, albumID, albumCover, topSongID):
+class AlbumCard(tk.Frame): #TODO: connect to db
+    def __init__(self, parent, artistID, albumID, albumCover, topSongID): #TODO: make buttons link to album page
         tk.Frame.__init__(self, parent, bg=blackPlayer, highlightbackground=textBrightLow, highlightthickness=2)
 
         self.albumCover = Label(self, image=albumCover)
         self.albumCover.image = albumCover
         self.albumCover.pack(side=tk.TOP, padx=10, pady=10)
 
-        self.albumRating = Stars(self, 0) #TODO: add album rating functionality
+        self.albumRating = Stars(self, int(preferencesObj.getPreference("currentSongID"))) #TODO: add album rating functionality
         self.albumRating.pack()
 
-        self.albumName = Button(self, text=str(albumID), font=fontMainBoldSmall, bg=blackBackground, fg=textBrightMed, activebackground=blackPlayer, activeforeground=textBrightHigh)
+        self.albumName = Label(self, text=str(albumID), font=fontMainBoldSmall, bg=blackBackground, fg=textBrightMed, activebackground=blackPlayer, activeforeground=textBrightHigh)
         self.albumName.pack(fill=tk.X, pady=(5, 0))
 
         self.topSongsContainer = Frame(self, bg=blackPlayer)
@@ -837,6 +837,6 @@ class UIClass:
             try:
                 #print(preferencesObj.getPreference("currentPlaytime"))
                 currentPlaytime = secondsToTimecode(timecodeToSeconds(preferencesObj.getPreference("currentPlaytime")) + (pygame.mixer.music.get_pos() / 1000) + 1)
-                self.sharedWindowObj.MainWindow.updatePlaytimeUI(currentPlaytime, secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/Ancient-music.mp3").get_length()))
+                self.sharedWindowObj.MainWindow.updatePlaytimeUI(currentPlaytime, secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/{ID}.mp3".format(ID=int(preferencesObj.getPreference("currentSongID")))).get_length()))
             except AttributeError:
                 print("nah")

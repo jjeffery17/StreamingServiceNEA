@@ -1,3 +1,4 @@
+import random
 import numpy
 import numpy as np
 from RecommendationSystem import CollaborativeFiltering as CF #import as called from main.py
@@ -111,11 +112,18 @@ def updateItem(userID, songID, rating, listened, artist, album):
 def getRecommendations(userID, amountPerType):
     recommendations = []
 
-    #get recommendations from Collaborative Filtering
-    for recommendation in CF.getRecommendationsByUser(userID):
-        if len(recommendations) >= amountPerType[0]:
-            break
-        recommendations.append(recommendation[1])
+    #get recommendations from collaborative filtering
+    recommendationIndexes = []
+    CFRecommendations = CF.getRecommendationsByUser(userID)
+
+    for i in range(amountPerType[0]): #get random recommendation indexes
+        randomIndex = random.randint(0, len(CFRecommendations)-1)
+        while randomIndex in recommendationIndexes: #if index is not new, keep generating new indexes until a new one is found
+            randomIndex = random.randint(0, len(CFRecommendations) - 1)
+        recommendationIndexes.append(randomIndex)
+
+    for index in recommendationIndexes: #add shuffled recommendations to final array
+        recommendations.append(CFRecommendations[index][1])
 
     #get recommendations from AI
 
