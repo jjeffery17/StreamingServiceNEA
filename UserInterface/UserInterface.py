@@ -119,6 +119,9 @@ def invertColour(colour):
     r, g, b = 255-r, 255-g, 255-b #invert values
     return "#"+str(hex(r))[2:].zfill(2)+str(hex(g))[2:].zfill(2)+str(hex(b))[2:].zfill(2) #format and output
 
+def clamp(val, min_val, max_val):
+    return max(min(val, max_val), min_val) #max gets the biggest item and min gets the smallest item
+
 onClose = None
 
 #--- define Non-UI classes ---
@@ -354,7 +357,7 @@ class MainWindow(tk.Frame):
         self.totalPlaytime["text"] = totalPlaytime
 
     def updatePlaytimeStream(self, key): #key must be present as bind() passes through the keybind to the function
-        preferencesObj.setPreference("currentPlaytime", secondsToTimecode(float(self.playtimer.get() / 1000) * pygame.mixer.Sound("SampleAudio/mp3/{ID}.mp3".format(ID=int(preferencesObj.getPreference("currentSongID")))).get_length()))
+        preferencesObj.setPreference("currentPlaytime", secondsToTimecode(clamp(float(self.playtimer.get() / 1000) * timecodeToSeconds(preferencesObj.getPreference("currentSongLength")), 0, timecodeToSeconds(preferencesObj.getPreference("currentSongLength")))))
         self.updatePlaytimeUI(preferencesObj.getPreference("currentPlaytime"), preferencesObj.getPreference("currentSongLength"))
         if self.play:
             self.pausePlay(override=True)
@@ -835,7 +838,7 @@ class UIClass:
             sleep(1)
             try:
                 #print(preferencesObj.getPreference("currentPlaytime"))
-                currentPlaytime = secondsToTimecode(timecodeToSeconds(preferencesObj.getPreference("currentPlaytime")) + (pygame.mixer.music.get_pos() / 1000) + 1)
+                currentPlaytime = secondsToTimecode(clamp(timecodeToSeconds(preferencesObj.getPreference("currentPlaytime")) + (pygame.mixer.music.get_pos() / 1000) + 1, 0, timecodeToSeconds(preferencesObj.getPreference("currentSongLength"))))
                 self.sharedWindowObj.MainWindow.updatePlaytimeUI(currentPlaytime, preferencesObj.getPreference("currentSongLength"))
             except AttributeError:
                 print("nah")
