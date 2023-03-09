@@ -1,6 +1,7 @@
 import random
 import threading
 import pygame
+import sqlite3 as sql
 import tkinter as tk
 from tkinter import *
 from tkinter import ttk
@@ -155,6 +156,8 @@ class Window:
         self.root.config(bg=blackBackground)
         self.root.geometry("1280x720") #default screen size
 
+        self.conn = sql.connect("Data/Main.db")
+
         self.visitedWindows = Stack()
 
         self.recommendations = recommendations
@@ -227,6 +230,9 @@ class Window:
                 self.visitedWindows.delete()
         else:
             print("Error: no new window with name:", newWindow, "to change to")
+
+    def queryMain(self, query=""):
+        cursor = self.conn.execute(query)
 
 class MainWindow(tk.Frame):
     def __init__(self, parent, window, recommendations=[]):
@@ -339,7 +345,7 @@ class MainWindow(tk.Frame):
         self.totalPlaytime = Label(self.playtimeInfoContainer, text="0:00", font=fontMainNorm, bg=blackPlayer, fg=textBrightMed)
         self.totalPlaytime.pack(side=tk.RIGHT, padx=5, pady=(0, 10))
 
-        self.songName = Label(self.playerInfoLeft, text="Song "+preferencesObj.getPreference("currentSongID"), font=fontMainBold, bg=blackPlayer, fg=textBrightHigh) #TODO: connect to db
+        self.songName = Label(self.playerInfoLeft, text=self.window.conn.execute("SELECT SongName FROM Song WHERE SongID = {};".format(preferencesObj.getPreference("currentSongID"))), font=fontMainBold, bg=blackPlayer, fg=textBrightHigh) #TODO: connect to db
         self.songName.grid(row=0, column=0, padx=8, pady=10)
         self.artistName = Label(self.playerInfoLeft, text="Artist "+preferencesObj.getPreference("currentSongID"), font=fontMainBold, bg=blackPlayer, fg=textBrightMed) #TODO: connect to db
         self.artistName.grid(row=1, column=0, padx=10, pady=5)

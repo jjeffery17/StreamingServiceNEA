@@ -20,14 +20,8 @@ print("- final recommendations:", recommendations)
 
 pygame.init() #start pygame for use in audio playback and handling
 
-def audioSmoother():
-    while True:
-        pygame.time.wait(10)
-
 if __name__ == "__main__":
     p1 = threading.Thread(target=ui.UIClass, args=[recommendations])
     p2 = threading.Thread(target=st.audioPlayerObj.checkPlayLoop)
-    #p3 = threading.Thread(target=audioSmoother)
     p1.start()
     p2.start()
-    #p3.start()
