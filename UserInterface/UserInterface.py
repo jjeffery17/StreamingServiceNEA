@@ -345,7 +345,8 @@ class MainWindow(tk.Frame):
         self.currentSongStars = Stars(self.playerInfoRight, int(preferencesObj.getPreference("currentSongID")))
         self.currentSongStars.grid(row=1, column=0, padx=10, pady=5)
 
-        self.updatePlaytimeUI(preferencesObj.getPreference("currentPlaytime"), secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/{ID}.mp3".format(ID=int(preferencesObj.getPreference("currentSongID")))).get_length()))
+        preferencesObj.setPreference("currentSongLength", secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/{ID}.mp3".format(ID=int(preferencesObj.getPreference("currentSongID")))).get_length()))
+        self.updatePlaytimeUI(preferencesObj.getPreference("currentPlaytime"), preferencesObj.getPreference("currentSongLength"))
 
     def updatePlaytimeUI(self, currentPlaytime, totalPlaytime):
         self.playtimer.set((timecodeToSeconds(currentPlaytime) / timecodeToSeconds(totalPlaytime)) * 1000)
@@ -354,7 +355,7 @@ class MainWindow(tk.Frame):
 
     def updatePlaytimeStream(self, key): #key must be present as bind() passes through the keybind to the function
         preferencesObj.setPreference("currentPlaytime", secondsToTimecode(float(self.playtimer.get() / 1000) * pygame.mixer.Sound("SampleAudio/mp3/{ID}.mp3".format(ID=int(preferencesObj.getPreference("currentSongID")))).get_length()))
-        self.updatePlaytimeUI(preferencesObj.getPreference("currentPlaytime"), secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/{ID}.mp3".format(ID=int(preferencesObj.getPreference("currentSongID")))).get_length()))
+        self.updatePlaytimeUI(preferencesObj.getPreference("currentPlaytime"), preferencesObj.getPreference("currentSongLength"))
         if self.play:
             self.pausePlay(override=True)
 
@@ -398,8 +399,7 @@ class MainWindow(tk.Frame):
             self.pause.config(text="⏵")
             preferencesObj.setPreference("currentPlaytime", secondsToTimecode(timecodeToSeconds(
                 preferencesObj.getPreference("currentPlaytime")) + pygame.mixer.music.get_pos() / 1000))
-            self.updatePlaytimeUI(preferencesObj.getPreference("currentPlaytime"), secondsToTimecode(
-                pygame.mixer.Sound("SampleAudio/mp3/{ID}.mp3".format(ID=int(preferencesObj.getPreference("currentSongID")))).get_length()))
+            self.updatePlaytimeUI(preferencesObj.getPreference("currentPlaytime"), preferencesObj.getPreference("currentSongLength"))
             preferencesObj.setPreference("isPlaying", "False")
             self.play = True
             self.pause.config(text="⏸")
@@ -822,7 +822,6 @@ class AlbumCard(tk.Frame): #TODO: connect to db
 class UIClass:
     sharedWindowObj = None #storing a reference to the Window() class to allow access from different threads
     def __init__(self, recommendations):
-
         p1 = threading.Thread(target=self.runUI, args=[recommendations])
         p2 = threading.Thread(target=self.updateUI)
         p1.start()
@@ -837,6 +836,6 @@ class UIClass:
             try:
                 #print(preferencesObj.getPreference("currentPlaytime"))
                 currentPlaytime = secondsToTimecode(timecodeToSeconds(preferencesObj.getPreference("currentPlaytime")) + (pygame.mixer.music.get_pos() / 1000) + 1)
-                self.sharedWindowObj.MainWindow.updatePlaytimeUI(currentPlaytime, secondsToTimecode(pygame.mixer.Sound("SampleAudio/mp3/{ID}.mp3".format(ID=int(preferencesObj.getPreference("currentSongID")))).get_length()))
+                self.sharedWindowObj.MainWindow.updatePlaytimeUI(currentPlaytime, preferencesObj.getPreference("currentSongLength"))
             except AttributeError:
                 print("nah")
