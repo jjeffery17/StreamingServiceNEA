@@ -231,10 +231,6 @@ class Window:
         else:
             print("Error: no new window with name:", newWindow, "to change to")
 
-    def queryMain(self, query=""):
-        cursor = self.conn.cursor()
-        cursor.execute(query)
-
 class MainWindow(tk.Frame):
     def __init__(self, parent, window, recommendations=[]):
         tk.Frame.__init__(self, parent, bg=blackBackground)
@@ -346,12 +342,21 @@ class MainWindow(tk.Frame):
         self.totalPlaytime = Label(self.playtimeInfoContainer, text="0:00", font=fontMainNorm, bg=blackPlayer, fg=textBrightMed)
         self.totalPlaytime.pack(side=tk.RIGHT, padx=5, pady=(0, 10))
 
-        self.songName = Label(self.playerInfoLeft, text=self.window.conn.execute("SELECT SongName FROM Song WHERE SongID = {};".format(preferencesObj.getPreference("currentSongID"))).fetchall()[0][0], font=fontMainBold, bg=blackPlayer, fg=textBrightHigh) #TODO: connect to db
-        self.songName.grid(row=0, column=0, padx=8, pady=10)
-        self.artistName = Label(self.playerInfoLeft, text="Artist "+preferencesObj.getPreference("currentSongID"), font=fontMainBold, bg=blackPlayer, fg=textBrightMed) #TODO: connect to db
-        self.artistName.grid(row=1, column=0, padx=10, pady=5)
-        self.albumName = Label(self.playerInfoRight, text="Album "+preferencesObj.getPreference("currentSongID"), font=fontMainBold, bg=blackPlayer, fg=textBrightLow) #TODO: connect to db
-        self.albumName.grid(row=0, column=0, padx=8, pady=10)
+        self.songName = Label(self.playerInfoLeft,
+                              text=self.window.conn.execute("SELECT SongName FROM Song WHERE SongID = {};"
+                                                            .format(preferencesObj.getPreference("currentSongID"))).fetchall()[0][0],
+                              font=fontMainBold, bg=blackPlayer, fg=textBrightHigh)
+        self.songName.grid(row=0, column=0, padx=10, pady=10, sticky=tk.W)
+        self.artistName = Label(self.playerInfoLeft,
+                                text=self.window.conn.execute("SELECT ArtistName FROM Artist, Song WHERE Song.SongID = {} AND Song.ArtistID = Artist.ArtistID;"
+                                                            .format(preferencesObj.getPreference("currentSongID"))).fetchall()[0][0],
+                                font=fontMainBold, bg=blackPlayer, fg=textBrightMed)
+        self.artistName.grid(row=1, column=0, padx=10, pady=5, sticky=tk.W)
+        self.albumName = Label(self.playerInfoRight,
+                               text=self.window.conn.execute("SELECT AlbumName FROM Album, Song WHERE Song.SongID = {} AND Song.AlbumID = Album.AlbumID;"
+                                                            .format(preferencesObj.getPreference("currentSongID"))).fetchall()[0][0],
+                               font=fontMainBold, bg=blackPlayer, fg=textBrightLow)
+        self.albumName.grid(row=0, column=0, padx=8, pady=10, sticky=tk.E)
         self.currentSongStars = Stars(self.playerInfoRight, int(preferencesObj.getPreference("currentSongID")))
         self.currentSongStars.grid(row=1, column=0, padx=10, pady=5)
 
