@@ -708,7 +708,9 @@ class SearchResultItem(tk.Frame): #TODO: connect to db
         self.artistName.grid(row=1, column=0, pady=1)
         self.albumName = Button(self.infoContainerRight, text=str(albumID), font=fontMainBoldSmall, bg=blackSearch, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh, command=self.openAlbum)
         self.albumName.grid(row=0, column=0, sticky="e")
-        self.currentSongStars = Stars(self.infoContainerRight, songID)
+        self.currentSongStars = Stars(self.infoContainerRight, songID,
+                                      defaultStars=self.window.conn.execute("SELECT SongAvgRating FROM Song WHERE SongID = {};"
+                                                                            .format(preferencesObj.getPreference("currentSongID"))).fetchall()[0][0])
         self.currentSongStars.grid(row=1, column=0)
 
     def openArtist(self):
@@ -718,10 +720,13 @@ class SearchResultItem(tk.Frame): #TODO: connect to db
         self.window.changeWindow(currentWindow=self.owningWidget, newWindow="album", albumID=self.albumID)
 
 class Stars(tk.Frame): #TODO: connect to db
-    def __init__(self, parent, songID):
+    def __init__(self, parent, songID=0, defaultStars=3):
         tk.Frame.__init__(self, parent)
         self.songID = songID
-        self.starsArr = ["★", "★", "★", "☆", "☆"]
+
+        self.starsArr = ["☆", "☆", "☆", "☆", "☆"]
+        for i in range(defaultStars):
+            self.starsArr[i] = "★"
         self.updateButtons()
 
     def updateStars(self, starCount):

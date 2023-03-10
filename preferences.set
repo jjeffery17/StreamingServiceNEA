@@ -1,6 +1,6 @@
 firstLaunch = False
 userID = 0
 currentSongID = 1
-currentPlaytime = 0:43
+currentPlaytime = 0:08
 currentSongLength = 1:17
 isPlaying = False
