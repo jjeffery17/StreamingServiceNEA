@@ -1,6 +1,7 @@
 import random
 import threading
 import pygame
+import colorsys
 import sqlite3 as sql
 import tkinter as tk
 from tkinter import *
@@ -118,6 +119,17 @@ def invertColour(colour):
     g = int(colour[3:5], 16)
     b = int(colour[5:7], 16)
     r, g, b = 255-r, 255-g, 255-b #invert values
+    return "#"+str(hex(r))[2:].zfill(2)+str(hex(g))[2:].zfill(2)+str(hex(b))[2:].zfill(2) #format and output
+
+def getComplimentary(colour):
+    r = int(colour[1:3], 16)  # get rgb values as integers
+    g = int(colour[3:5], 16)
+    b = int(colour[5:7], 16)
+    h, s, v = colorsys.rgb_to_hsv(r, g, b) #convert to hsv to get complimentary colour
+    s = 1 - s
+    v = 255 - v
+    r, g, b = colorsys.hsv_to_rgb(h, s, v)
+    r, g, b = int(r*255), int(g*255), int(b*255)
     return "#"+str(hex(r))[2:].zfill(2)+str(hex(g))[2:].zfill(2)+str(hex(b))[2:].zfill(2) #format and output
 
 def clamp(val, min_val, max_val):
@@ -292,7 +304,7 @@ class MainWindow(tk.Frame):
         #creating empty search results for testing
         albumCoverSmall = ImageTk.PhotoImage(albumCoverPlaceholderSmall)
         for i in range(5):
-            self.searchResultItems.append(SearchResultItem(self.searchResultItemsContainer, window=self.window, owningWidget=self, songID=i, artistID=i, albumID=i, albumCover=albumCoverSmall))
+            self.searchResultItems.append(SearchResultItem(self.searchResultItemsContainer, window=self.window, owningWidget=self, songID=i+1, artistID=i+1, albumID=i+1, albumCover=albumCoverSmall))
             self.searchResultItems[i].pack(fill=tk.X)
 
     def search(self, entry):
@@ -442,25 +454,36 @@ class MainWindow(tk.Frame):
     def settings(self):
         self.window.changeWindow(currentWindow=self, newWindow="settings", albumID=0, artistID=0, addToQueue=True)
 
-class ArtistWindow(tk.Frame): #TODO: connect to db
+class ArtistWindow(tk.Frame):
     def __init__(self, parent, artistID, window):
         self.window = window
         tk.Frame.__init__(self, parent, bg=blackBackground)
-        self.artistColour = "#01112b"
-        self.artistHighlight = invertColour(self.artistColour)
-        self.artistName = "Artist "+str(artistID)
-        self.pinnedSongsID = [0, 0, 0, 0, 0]
-        self.pinnedAlbumID = 0
+        self.artistColour = self.window.conn.execute("SELECT Colour FROM Artist WHERE ArtistID = {};".format(artistID)).fetchall()[0][0]
+        self.artistHighlight = getComplimentary(self.artistColour)
+        self.artistName = self.window.conn.execute("SELECT ArtistName FROM Artist WHERE ArtistID = {};"
+                                                   .format(artistID)).fetchall()[0][0]
+
+        self.topSongsIDs = self.window.conn.execute("SELECT SongID FROM Song WHERE ArtistID={};"
+                                                    .format(artistID)).fetchall()[-5:]
+        for i in range(len(self.topSongsIDs)):
+            self.topSongsIDs[i] = self.topSongsIDs[i][0] #get IDs of 5 most recent songs
+
+        try:
+            self.topAlbumID = self.window.conn.execute("SELECT AlbumID FROM Album WHERE ArtistID={};"
+                                                        .format(artistID)).fetchall()[0][0]
+        except IndexError:
+            self.topAlbumID = 0
+
         self.initHeader()
         self.initHighlightBar()
 
         style = ttk.Style()
         style.theme_use("clam")
 
-        emptyList = []
-        for i in range(24): #TODO: connect to db
-            emptyList.append(0)
-        self.initMain(emptyList)
+        artistAlbums = self.window.conn.execute("SELECT AlbumID FROM Album WHERE ArtistID={};".format(artistID)).fetchall()
+        for i in range(len(artistAlbums)):
+            artistAlbums[i] = artistAlbums[i][0] #get IDs of all albums where artist is listed as main contributor
+        self.initMain(artistAlbums)
 
     def initHeader(self):
         self.header = Frame(self, bg=self.artistColour)
@@ -488,13 +511,19 @@ class ArtistWindow(tk.Frame): #TODO: connect to db
         self.highlightBar.pack(side=tk.RIGHT, fill=tk.Y)
 
         albumCoverLarge = ImageTk.PhotoImage(albumCoverPlaceholderLarge)
-        #self.pinnedAlbumID
-        self.albumCard = AlbumCard(self.highlightBar, "Artist Name", "Album Name", albumCoverLarge, [0, 0, 0])
-        self.albumCard.pack(side=tk.TOP, padx=10, pady=10)
+        if self.topAlbumID != 0:
+            self.albumCard = AlbumCard(self.highlightBar, self.window.conn.execute("SELECT ArtistID FROM Album WHERE AlbumID={};".format(self.topAlbumID)).fetchall()[0][0]
+                                       , self.topAlbumID, albumCoverLarge, [0, 0, 0])
+            self.albumCard.pack(side=tk.TOP, padx=10, pady=10)
+        else:
+            self.albumCard = Label(self.highlightBar, text="This artist has not created any albums,\n"+
+                                                           "they may have still contributed to other albums.\n"+
+                                                           "Check other artists or search for an album!", font=fontMainBold, bg=blackSearch, fg=textBrightMed)
+            self.albumCard.pack(side=tk.TOP, padx=10, pady=10)
 
         albumCoverSmall = ImageTk.PhotoImage(albumCoverPlaceholderSmall)
         self.pinnedSongsList = []
-        for songID in self.pinnedSongsID:
+        for songID in self.topSongsIDs:
             self.pinnedSongsList.append(SearchResultItem(self.highlightBar, window=self.window, owningWidget=self, songID=songID, artistID=songID, albumID=songID, albumCover=albumCoverSmall))
         for pinnedSong in self.pinnedSongsList:
             pinnedSong.pack(padx=10)
@@ -708,9 +737,7 @@ class SearchResultItem(tk.Frame): #TODO: connect to db
         self.artistName.grid(row=1, column=0, pady=1)
         self.albumName = Button(self.infoContainerRight, text=str(albumID), font=fontMainBoldSmall, bg=blackSearch, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh, command=self.openAlbum)
         self.albumName.grid(row=0, column=0, sticky="e")
-        self.currentSongStars = Stars(self.infoContainerRight, songID,
-                                      defaultStars=self.window.conn.execute("SELECT SongAvgRating FROM Song WHERE SongID = {};"
-                                                                            .format(preferencesObj.getPreference("currentSongID"))).fetchall()[0][0])
+        self.currentSongStars = Stars(self.infoContainerRight, songID)
         self.currentSongStars.grid(row=1, column=0)
 
     def openArtist(self):
@@ -719,13 +746,13 @@ class SearchResultItem(tk.Frame): #TODO: connect to db
     def openAlbum(self):
         self.window.changeWindow(currentWindow=self.owningWidget, newWindow="album", albumID=self.albumID)
 
-class Stars(tk.Frame): #TODO: connect to db
-    def __init__(self, parent, songID=0, defaultStars=3):
+class Stars(tk.Frame):
+    def __init__(self, parent, songID=0):
         tk.Frame.__init__(self, parent)
         self.songID = songID
 
         self.starsArr = ["☆", "☆", "☆", "☆", "☆"]
-        for i in range(defaultStars):
+        for i in range(rs.getRating(songID=songID)):
             self.starsArr[i] = "★"
         self.updateButtons()
 
@@ -858,4 +885,4 @@ class UIClass:
                 currentPlaytime = secondsToTimecode(clamp(timecodeToSeconds(preferencesObj.getPreference("currentPlaytime")) + (pygame.mixer.music.get_pos() / 1000) + 1, 0, timecodeToSeconds(preferencesObj.getPreference("currentSongLength"))))
                 self.sharedWindowObj.MainWindow.updatePlaytimeUI(currentPlaytime, preferencesObj.getPreference("currentSongLength"))
             except AttributeError:
-                print("nah")
+                print("! no attribute window found")

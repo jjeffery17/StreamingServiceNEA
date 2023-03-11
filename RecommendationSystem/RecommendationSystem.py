@@ -3,8 +3,12 @@ import numpy
 import numpy as np
 from RecommendationSystem import CollaborativeFiltering as CF #import as called from main.py
 import math
+import sqlite3
 
 ratingWeight = 0.5 #how much does the rating from hte user effect items in the collaborative filtering matrix
+
+def clamp(val, min_val, max_val):
+    return max(min(val, max_val), min_val)
 
 def resetMatrix(users=0, songs=0):
     '''
@@ -88,6 +92,30 @@ def updateBehaviour(userID=0, songID=0, rating=None, listened=None, artist=None,
     matrix = np.array(matrix)
     np.save("Data/UserBehaviour.npy", matrix)
     print("/ updated user behaviour matrix to:", matrix)
+
+def getRating(songID=0):
+    songID = clamp(songID, 1, 8) #TODO: clamp to size of song library
+    matrix = np.load("Data/UserBehaviour.npy")
+    matrix = matrix.tolist()
+    #print(". getting rating of SongID:", songID)
+
+    location = 0
+    counter = 0
+    for row in matrix:
+        if int(row[0]) == songID:
+            location = matrix.index(row)
+        else:
+            counter += 1
+
+    if counter == len(matrix) and location == 0: #if song is not in matrix
+        matrix.append([songID, 0.0, 0.0, 0.0, 0.0])
+        location = len(matrix)-1
+        #print("! no rating found\n. defaulting to average rating")
+        conn = sqlite3.connect("Data/Main.db")
+        return conn.execute("SELECT SongAvgRating FROM Song WHERE SongID = {};".format(songID)).fetchall()[0][0] if songID != 0 else 3
+    else:
+        #print("/ success!")
+        return int(matrix[location][1])
 
 def updateItem(userID, songID, rating, listened, artist, album):
     '''
