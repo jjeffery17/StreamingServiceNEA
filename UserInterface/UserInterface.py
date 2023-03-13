@@ -125,11 +125,10 @@ def getComplimentary(colour):
     r = int(colour[1:3], 16)  # get rgb values as integers
     g = int(colour[3:5], 16)
     b = int(colour[5:7], 16)
-    h, s, v = colorsys.rgb_to_hsv(r, g, b) #convert to hsv to get complimentary colour
-    s = 1 - s
-    v = 255 - v
-    r, g, b = colorsys.hsv_to_rgb(h, s, v)
-    r, g, b = int(r*255), int(g*255), int(b*255)
+    if r+g+b  > 382:
+        r, g, b = 0, 0, 0
+    else:
+        r, g, b = 255, 255, 255
     return "#"+str(hex(r))[2:].zfill(2)+str(hex(g))[2:].zfill(2)+str(hex(b))[2:].zfill(2) #format and output
 
 def clamp(val, min_val, max_val):
@@ -731,11 +730,17 @@ class SearchResultItem(tk.Frame): #TODO: connect to db
         self.infoContainerRight = Frame(self, bg=blackSearch)
         self.infoContainerRight.pack(side=tk.RIGHT, fill=tk.X, padx=5)
 
-        self.songName = Label(self.infoContainerLeft, text=str(songID), font=fontMainBoldSmall, bg=blackSearch, fg=textBrightHigh)
-        self.songName.grid(row=0, column=0, pady=1)
-        self.artistName = Button(self.infoContainerLeft, text=str(artistID), font=fontMainBoldSmall, bg=blackSearch, fg=textBrightMed, activebackground=blackPlayer, activeforeground=textBrightHigh, command=self.openArtist)
-        self.artistName.grid(row=1, column=0, pady=1)
-        self.albumName = Button(self.infoContainerRight, text=str(albumID), font=fontMainBoldSmall, bg=blackSearch, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh, command=self.openAlbum)
+        self.songName = Label(self.infoContainerLeft, text=self.window.conn.execute("SELECT SongName FROM Song WHERE SongID = {};"
+                                                            .format(clamp(int(userID), 1, 8))).fetchall()[0][0],
+                              font=fontMainBoldSmall, bg=blackSearch, fg=textBrightHigh)
+        self.songName.grid(row=0, column=0, pady=1, sticky="w")
+        self.artistName = Button(self.infoContainerLeft, text=self.window.conn.execute("SELECT ArtistName FROM Artist WHERE ArtistID = {};"
+                                                            .format(clamp(int(artistID), 1, 6))).fetchall()[0][0],
+                              font=fontMainBoldSmall, bg=blackSearch, fg=textBrightMed, activebackground=blackPlayer, activeforeground=textBrightHigh, command=self.openArtist)
+        self.artistName.grid(row=1, column=0, pady=1, sticky="w")
+        self.albumName = Button(self.infoContainerRight, text=self.window.conn.execute("SELECT AlbumName FROM Album WHERE AlbumID = {};"
+                                                            .format(clamp(int(albumID), 1, 4))).fetchall()[0][0],
+                              font=fontMainBoldSmall, bg=blackSearch, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh, command=self.openAlbum)
         self.albumName.grid(row=0, column=0, sticky="e")
         self.currentSongStars = Stars(self.infoContainerRight, songID)
         self.currentSongStars.grid(row=1, column=0)
