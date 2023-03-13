@@ -134,6 +134,11 @@ def getComplimentary(colour):
 def clamp(val, min_val, max_val):
     return max(min(val, max_val), min_val) #max gets the biggest item and min gets the smallest item
 
+def textClamp(text, max):
+    if len(text) > max:
+        text = text[:max-3]+"..."
+    return text
+
 onClose = None
 
 #--- define Non-UI classes ---
@@ -711,7 +716,7 @@ class SettingsWindow(tk.Frame): #TODO: connect to db (+ encrypt)
     def reset(self):
         rs.resetBehaviour()
 
-class SearchResultItem(tk.Frame): #TODO: connect to db
+class SearchResultItem(tk.Frame):
     def __init__(self, parent, window, owningWidget, songID, artistID, albumID, albumCover):
         self.window = window
         self.owningWidget = owningWidget
@@ -730,16 +735,16 @@ class SearchResultItem(tk.Frame): #TODO: connect to db
         self.infoContainerRight = Frame(self, bg=blackSearch)
         self.infoContainerRight.pack(side=tk.RIGHT, fill=tk.X, padx=5)
 
-        self.songName = Label(self.infoContainerLeft, text=self.window.conn.execute("SELECT SongName FROM Song WHERE SongID = {};"
-                                                            .format(clamp(int(userID), 1, 8))).fetchall()[0][0],
+        self.songName = Label(self.infoContainerLeft, text=textClamp(self.window.conn.execute("SELECT SongName FROM Song WHERE SongID = {};"
+                                                            .format(clamp(int(songID), 1, 8))).fetchall()[0][0], 13),
                               font=fontMainBoldSmall, bg=blackSearch, fg=textBrightHigh)
         self.songName.grid(row=0, column=0, pady=1, sticky="w")
-        self.artistName = Button(self.infoContainerLeft, text=self.window.conn.execute("SELECT ArtistName FROM Artist WHERE ArtistID = {};"
-                                                            .format(clamp(int(artistID), 1, 6))).fetchall()[0][0],
+        self.artistName = Button(self.infoContainerLeft, text=textClamp(self.window.conn.execute("SELECT ArtistName FROM Artist WHERE ArtistID = {};"
+                                                            .format(clamp(int(artistID), 1, 6))).fetchall()[0][0], 13),
                               font=fontMainBoldSmall, bg=blackSearch, fg=textBrightMed, activebackground=blackPlayer, activeforeground=textBrightHigh, command=self.openArtist)
         self.artistName.grid(row=1, column=0, pady=1, sticky="w")
-        self.albumName = Button(self.infoContainerRight, text=self.window.conn.execute("SELECT AlbumName FROM Album WHERE AlbumID = {};"
-                                                            .format(clamp(int(albumID), 1, 4))).fetchall()[0][0],
+        self.albumName = Button(self.infoContainerRight, text=textClamp(self.window.conn.execute("SELECT AlbumName FROM Album WHERE AlbumID = {};"
+                                                            .format(clamp(int(albumID), 1, 4))).fetchall()[0][0], 13),
                               font=fontMainBoldSmall, bg=blackSearch, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh, command=self.openAlbum)
         self.albumName.grid(row=0, column=0, sticky="e")
         self.currentSongStars = Stars(self.infoContainerRight, songID)
@@ -806,9 +811,9 @@ class RecommendationRow(tk.Frame):
             self.recommendationItemList.append(RecommendationCard(self.recommendationsHolder, window=self.window, owningWidget=owningWidget, albumCover=albumCoverMed, albumID=songID, artistID=songID, songID=songID))
 
         for item in self.recommendationItemList:
-            item.pack(side=tk.LEFT, padx=50, pady=25)
+            item.pack(side=tk.LEFT, padx=self.window.root.winfo_screenwidth()-1880, pady=25)
 
-class RecommendationCard(tk.Frame): #TODO: connect to db
+class RecommendationCard(tk.Frame):
     def __init__(self, parent, window, owningWidget, songID, artistID, albumID, albumCover):
         self.window = window
         self.owningWidget = owningWidget
@@ -825,13 +830,19 @@ class RecommendationCard(tk.Frame): #TODO: connect to db
         self.infoContainerLeft = Frame(self, bg=blackBackground)
         self.infoContainerLeft.pack(side=tk.LEFT, fill=tk.X)
         self.infoContainerRight = Frame(self, bg=blackBackground)
-        self.infoContainerRight.pack(side=tk.RIGHT, fill=tk.X, padx=(100, 10))
+        self.infoContainerRight.pack(side=tk.RIGHT, fill=tk.X, padx=(20, 10))
 
-        self.songName = Label(self.infoContainerLeft, text=str(songID), font=fontMainBold, bg=blackBackground, fg=textBrightHigh)
-        self.songName.grid(row=0, column=0, pady=5)
-        self.artistName = Button(self.infoContainerLeft, text=str(artistID), font=fontMainBoldSmall, bg=blackBackground, fg=textBrightMed, activebackground=blackPlayer, activeforeground=textBrightHigh, command=self.openArtist)
-        self.artistName.grid(row=1, column=0, pady=5)
-        self.albumName = Button(self.infoContainerRight, text=str(albumID), font=fontMainBoldSmall, bg=blackBackground, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh, command=self.openAlbum)
+        self.songName = Label(self.infoContainerLeft, text=textClamp(self.window.conn.execute("SELECT SongName FROM Song WHERE SongID = {};"
+                                                            .format(clamp(int(songID), 1, 8))).fetchall()[0][0], 15),
+                              font=fontMainBold, bg=blackBackground, fg=textBrightHigh)
+        self.songName.grid(row=0, column=0, pady=5, sticky="w")
+        self.artistName = Button(self.infoContainerLeft, text=textClamp(self.window.conn.execute("SELECT ArtistName FROM Artist WHERE ArtistID = {};"
+                                                            .format(clamp(int(artistID), 1, 6))).fetchall()[0][0], 15),
+                                 font=fontMainBoldSmall, bg=blackBackground, fg=textBrightMed, activebackground=blackPlayer, activeforeground=textBrightHigh, command=self.openArtist)
+        self.artistName.grid(row=1, column=0, pady=5, sticky="w")
+        self.albumName = Button(self.infoContainerRight, text=textClamp(self.window.conn.execute("SELECT AlbumName FROM Album WHERE AlbumID = {};"
+                                                            .format(clamp(int(albumID), 1, 4))).fetchall()[0][0], 15),
+                                font=fontMainBoldSmall, bg=blackBackground, fg=textBrightLow, activebackground=blackPlayer, activeforeground=textBrightHigh, command=self.openAlbum)
         self.albumName.grid(row=0, column=0, pady=5, sticky="e")
         self.currentSongStars = Stars(self.infoContainerRight, songID)
         self.currentSongStars.grid(row=1, column=0, pady=5)
